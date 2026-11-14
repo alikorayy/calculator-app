@@ -43,7 +43,7 @@ func handleCalculate(logger *slog.Logger) http.HandlerFunc {
 
 		result, err := engine.Calculate(engine.Operation(*req.Operation), operands)
 		if err != nil {
-			writeEngineError(w, logger, err)
+			writeEngineError(r.Context(), w, logger, err)
 			return
 		}
 		writeJSON(w, http.StatusOK, CalculationResponse{Result: result.Value, Approximate: result.Approximate})

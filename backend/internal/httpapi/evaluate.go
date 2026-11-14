@@ -38,7 +38,7 @@ func handleEvaluate(logger *slog.Logger) http.HandlerFunc {
 
 		result, err := engine.Evaluate(*req.Expression)
 		if err != nil {
-			writeEngineError(w, logger, err)
+			writeEngineError(r.Context(), w, logger, err)
 			return
 		}
 		writeJSON(w, http.StatusOK, CalculationResponse{Result: result.Value, Approximate: result.Approximate})

@@ -7,3 +7,16 @@ const HeaderRequestID = "X-Request-ID"
 // maxRequestIDLength bounds an incoming request ID so that a client cannot
 // flood the logs through it.
 const maxRequestIDLength = 64
+
+// Keys of the structured log fields written by this package.
+const (
+	logKeyRequestID  = "request_id"
+	logKeyMethod     = "method"
+	logKeyPath       = "path"
+	logKeyStatus     = "status"
+	logKeyBytes      = "bytes"
+	logKeyDurationMS = "duration_ms"
+)
+
+// logMessageRequest is the message of the one log line written per request.
+const logMessageRequest = "request completed"

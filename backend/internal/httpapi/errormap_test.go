@@ -1,6 +1,7 @@
 package httpapi
 
 import (
+	"context"
 	"errors"
 	"net/http"
 	"net/http/httptest"
@@ -48,7 +49,7 @@ func TestWriteEngineError_UnexpectedErrorsAre500WithoutDetails(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			rec := httptest.NewRecorder()
 
-			writeEngineError(rec, discardLogger(), tt.err)
+			writeEngineError(context.Background(), rec, discardLogger(), tt.err)
 
 			assertResponse(t, rec, http.StatusInternalServerError,
 				`{"error":{"code":"INTERNAL_ERROR","message":"An unexpected error occurred"}}`)

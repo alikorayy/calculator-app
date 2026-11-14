@@ -1,6 +1,7 @@
 package httpapi
 
 import (
+	"context"
 	"errors"
 	"log/slog"
 	"net/http"
@@ -32,19 +33,20 @@ func statusForEngineCode(code engine.Code) (status int, publicCode string, ok bo
 }
 
 // writeEngineError writes an error returned by the engine. Anything that is not
-// an *engine.Error with a known code is unexpected: it is logged and answered
-// with a generic 500, without leaking internal details to the client.
-func writeEngineError(w http.ResponseWriter, logger *slog.Logger, err error) {
+// an *engine.Error with a known code is unexpected: it is logged with the
+// request's context (so the log line carries the request ID) and answered with
+// a generic 500, without leaking internal details to the client.
+func writeEngineError(ctx context.Context, w http.ResponseWriter, logger *slog.Logger, err error) {
 	var engineErr *engine.Error
 	if !errors.As(err, &engineErr) {
-		logger.Error("unexpected engine error", "error", err)
+		logger.ErrorContext(ctx, "unexpected engine error", "error", err)
 		writeError(w, http.StatusInternalServerError, codeInternalError, messageInternalError)
 		return
 	}
 
 	status, code, ok := statusForEngineCode(engineErr.Code)
 	if !ok {
-		logger.Error("engine error code has no HTTP mapping", "code", engineErr.Code, "error", err)
+		logger.ErrorContext(ctx, "engine error code has no HTTP mapping", "code", engineErr.Code, "error", err)
 		writeError(w, http.StatusInternalServerError, codeInternalError, messageInternalError)
 		return
 	}
