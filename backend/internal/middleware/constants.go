@@ -20,3 +20,17 @@ const (
 
 // logMessageRequest is the message of the one log line written per request.
 const logMessageRequest = "request completed"
+
+// Panic recovery.
+const (
+	logMessagePanic = "panic recovered"
+	logKeyPanic     = "panic"
+	logKeyStack     = "stack"
+)
+
+// Error codes and messages of the responses written by this package. They
+// match the codes of the API's error envelope.
+const (
+	codeInternalError    = "INTERNAL_ERROR"
+	messageInternalError = "An unexpected error occurred"
+)

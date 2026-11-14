@@ -26,7 +26,7 @@ type ErrorBody struct {
 func writeJSON(w http.ResponseWriter, status int, body any) {
 	payload, err := json.Marshal(body)
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, codeInternalError, messageInternalError)
+		WriteError(w, http.StatusInternalServerError, codeInternalError, messageInternalError)
 		return
 	}
 
@@ -36,7 +36,8 @@ func writeJSON(w http.ResponseWriter, status int, body any) {
 	_, _ = w.Write(payload)
 }
 
-// writeError writes an error response using the standard error envelope.
-func writeError(w http.ResponseWriter, status int, code, message string) {
+// WriteError writes an error response in the standard error envelope. It is
+// exported so that middleware outside this package answers in the same format.
+func WriteError(w http.ResponseWriter, status int, code, message string) {
 	writeJSON(w, status, ErrorResponse{Error: ErrorBody{Code: code, Message: message}})
 }

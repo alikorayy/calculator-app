@@ -28,10 +28,10 @@ func (f *fallbackWriter) WriteHeader(status int) {
 	switch status {
 	case http.StatusNotFound:
 		f.replaced = true
-		writeError(f.ResponseWriter, status, codeNotFound, messageNotFound)
+		WriteError(f.ResponseWriter, status, codeNotFound, messageNotFound)
 	case http.StatusMethodNotAllowed:
 		f.replaced = true
-		writeError(f.ResponseWriter, status, codeMethodNotAllowed, messageMethodNotAllowed)
+		WriteError(f.ResponseWriter, status, codeMethodNotAllowed, messageMethodNotAllowed)
 	default:
 		f.ResponseWriter.WriteHeader(status)
 	}

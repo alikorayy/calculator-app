@@ -32,7 +32,7 @@ func handleEvaluate(logger *slog.Logger) http.HandlerFunc {
 			return
 		}
 		if req.Expression == nil {
-			writeError(w, http.StatusBadRequest, codeInvalidRequest, fmt.Sprintf(messageMissingField, fieldExpression))
+			WriteError(w, http.StatusBadRequest, codeInvalidRequest, fmt.Sprintf(messageMissingField, fieldExpression))
 			return
 		}
 

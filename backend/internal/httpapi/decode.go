@@ -69,5 +69,5 @@ func invalidRequest(message string) *decodeFailure {
 
 // writeDecodeFailure writes f as an error response.
 func writeDecodeFailure(w http.ResponseWriter, f *decodeFailure) {
-	writeError(w, f.status, f.code, f.message)
+	WriteError(w, f.status, f.code, f.message)
 }

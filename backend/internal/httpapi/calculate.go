@@ -28,11 +28,11 @@ func handleCalculate(logger *slog.Logger) http.HandlerFunc {
 			return
 		}
 		if req.Operation == nil {
-			writeError(w, http.StatusBadRequest, codeInvalidRequest, fmt.Sprintf(messageMissingField, fieldOperation))
+			WriteError(w, http.StatusBadRequest, codeInvalidRequest, fmt.Sprintf(messageMissingField, fieldOperation))
 			return
 		}
 		if req.Operands == nil {
-			writeError(w, http.StatusBadRequest, codeInvalidRequest, fmt.Sprintf(messageMissingField, fieldOperands))
+			WriteError(w, http.StatusBadRequest, codeInvalidRequest, fmt.Sprintf(messageMissingField, fieldOperands))
 			return
 		}
 		operands, failure := operandTexts(req.Operands)

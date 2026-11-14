@@ -40,14 +40,14 @@ func writeEngineError(ctx context.Context, w http.ResponseWriter, logger *slog.L
 	var engineErr *engine.Error
 	if !errors.As(err, &engineErr) {
 		logger.ErrorContext(ctx, "unexpected engine error", "error", err)
-		writeError(w, http.StatusInternalServerError, codeInternalError, messageInternalError)
+		WriteError(w, http.StatusInternalServerError, codeInternalError, messageInternalError)
 		return
 	}
 
 	status, code, ok := statusForEngineCode(engineErr.Code)
 	if !ok {
 		logger.ErrorContext(ctx, "engine error code has no HTTP mapping", "code", engineErr.Code, "error", err)
-		writeError(w, http.StatusInternalServerError, codeInternalError, messageInternalError)
+		WriteError(w, http.StatusInternalServerError, codeInternalError, messageInternalError)
 		return
 	}
 

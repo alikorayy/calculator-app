@@ -72,7 +72,7 @@ func TestWriteError_WritesEnvelope(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			rec := httptest.NewRecorder()
 
-			writeError(rec, tt.status, tt.code, tt.message)
+			WriteError(rec, tt.status, tt.code, tt.message)
 
 			if rec.Code != tt.status {
 				t.Errorf("status = %d, want %d", rec.Code, tt.status)
