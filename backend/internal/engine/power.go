@@ -60,8 +60,11 @@ func integerPower(base *big.Rat, n *big.Int) (*big.Rat, error) {
 // fractionalPower returns base^exponent for a non-integer exponent. base must
 // not be zero.
 func fractionalPower(base, exponent *big.Rat) (*big.Rat, error) {
-	if base.Sign() < 0 {
+	switch {
+	case base.Sign() < 0:
 		return nil, newError(CodeDomainError, msgInvalidInput)
+	case isPlusOrMinusOne(base):
+		return big.NewRat(1, 1), nil
 	}
 	if err := checkPowerMagnitude(base, exponent); err != nil {
 		return nil, err
@@ -69,7 +72,7 @@ func fractionalPower(base, exponent *big.Rat) (*big.Rat, error) {
 	if root, ok := exactRoot(base, exponent.Denom()); ok {
 		return integerPower(root, exponent.Num())
 	}
-	return approximatePower(base, exponent), nil
+	return approximatePower(base, exponent)
 }
 
 func isPlusOrMinusOne(r *big.Rat) bool {
@@ -84,18 +87,27 @@ func powerOfPlusOrMinusOne(base *big.Rat, n *big.Int) *big.Rat {
 	return big.NewRat(1, 1)
 }
 
-// checkPowerMagnitude estimates |base^exponent| before computing it and
-// reports OVERFLOW when it is clearly outside 10^-maxResultExponent ..
-// 10^maxResultExponent. Results close to the limit are computed and then
-// decided exactly by checkRange. float64 is used here only to estimate sizes,
-// never to compute a result.
+// checkPowerMagnitude estimates |base^exponent| = 10^(exponent·log10|base|)
+// before computing it and reports OVERFLOW when it is clearly outside
+// 10^-maxResultExponent .. 10^maxResultExponent. Results close to the limit
+// are computed and then decided exactly by checkRange. float64 is used here
+// only to estimate sizes, never to compute a result.
 func checkPowerMagnitude(base, exponent *big.Rat) error {
 	absExponent, _ := exponent.Float64()
-	magnitude := math.Abs(absExponent) * math.Abs(log10Abs(base.Num())-log10Abs(base.Denom()))
-	if magnitude > maxResultExponent+rangeCheckMargin {
+	magnitude := math.Abs(absExponent) * math.Abs(preciseLog10(new(big.Rat).Abs(base)))
+	// Written as "not within" so that a NaN estimate is rejected too.
+	if !(magnitude <= maxResultExponent+rangeCheckMargin) {
 		return newError(CodeOverflow, msgOutOfRange)
 	}
 	return nil
+}
+
+// preciseLog10 returns log10(x) for x > 0. It is computed in big.Float because
+// float64 cannot tell a base such as 1.000000000000001 from 1, and a tiny
+// logarithm multiplied by a huge exponent is still a huge result.
+func preciseLog10(x *big.Rat) float64 {
+	ln, _ := bigfloat.Log(new(big.Float).SetPrec(irrationalPrecision).SetRat(x)).Float64()
+	return ln / math.Ln10
 }
 
 // checkExactPowerSize reports LIMIT_EXCEEDED when base^n would need too many
@@ -162,9 +174,18 @@ func integerRoot(n *big.Int, degree int64) (*big.Int, bool) {
 
 // approximatePower computes an irrational base^exponent in big.Float and
 // converts it back to a fraction. base must be positive.
-func approximatePower(base, exponent *big.Rat) *big.Rat {
+//
+// checkPowerMagnitude normally rejects results that are out of range before
+// this runs. As a second line of defence, a result that big.Float itself
+// cannot represent (infinite, or so small that it becomes zero) is reported
+// as OVERFLOW instead of being converted.
+func approximatePower(base, exponent *big.Rat) (*big.Rat, error) {
 	x := new(big.Float).SetPrec(irrationalPrecision).SetRat(base)
 	y := new(big.Float).SetPrec(irrationalPrecision).SetRat(exponent)
-	result, _ := bigfloat.Pow(x, y).Rat(nil)
-	return result
+	f := bigfloat.Pow(x, y)
+	if f.IsInf() || f.Sign() == 0 {
+		return nil, newError(CodeOverflow, msgOutOfRange)
+	}
+	result, _ := f.Rat(nil)
+	return result, nil
 }

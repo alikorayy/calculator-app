@@ -87,6 +87,30 @@ func TestPower_IrrationalRootCubedIsWithinTolerance(t *testing.T) {
 	}
 }
 
+func TestApproximatePower_UnrepresentableResultIsOverflowNotPanic(t *testing.T) {
+	// 1 + 10^-60 is invisible to float64; raised to ±10^70 it is e^(±10^10),
+	// beyond even big.Float's exponent range.
+	base := new(big.Rat).Add(big.NewRat(1, 1), powerOfTen(-60))
+	tests := []struct {
+		name     string
+		exponent *big.Rat
+	}{
+		{"result too large becomes infinity", powerOfTen(70)},
+		{"result too small becomes zero", new(big.Rat).Neg(powerOfTen(70))},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, err := approximatePower(base, tt.exponent)
+
+			var engineErr *Error
+			if !errors.As(err, &engineErr) || engineErr.Code != CodeOverflow {
+				t.Errorf("approximatePower = (%v, %v), want an OVERFLOW error", result, err)
+			}
+		})
+	}
+}
+
 func TestPower_AtTheRangeLimit(t *testing.T) {
 	got, err := parseAndEvaluate(t, "10^10000")
 	if err != nil {
@@ -114,6 +138,10 @@ func TestPower_Errors(t *testing.T) {
 		{"zero to a negative fractional power", "0^-0.5", CodeDivisionByZero},
 		{"fractional power too large", "10^10001.5", CodeOverflow},
 		{"fractional power too small", "10^-10001.5", CodeOverflow},
+		// Found by FuzzEvaluate: float64 sees this base as exactly 1, so a naive
+		// estimate called the result small while big.Float overflowed to infinity.
+		{"base very close to one with a huge fractional exponent", "1.000000000000001^1000^10.1", CodeOverflow},
+		{"base very close to one with a huge negative fractional exponent", "1.000000000000001^-(1000^10.1)", CodeOverflow},
 		{"error in the base", "(1/0)^2", CodeDivisionByZero},
 		{"error in the exponent", "2^(1/0)", CodeDivisionByZero},
 	}
