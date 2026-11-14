@@ -85,7 +85,7 @@ func (rl *RateLimiter) retryAfterSeconds() int {
 }
 
 // Cleanup removes the buckets of clients that have been idle for longer than
-// idleAfter, every interval, until ctx is cancelled. A forgotten client simply
+// idleAfter, every interval, until ctx is canceled. A forgotten client simply
 // starts again with a full bucket, which it would have earned by then anyway.
 // Without it the map would grow with every client ever seen.
 func (rl *RateLimiter) Cleanup(ctx context.Context, interval, idleAfter time.Duration) {

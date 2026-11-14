@@ -169,6 +169,6 @@ func TestRateLimiter_CleanupRunsUntilCancelled(t *testing.T) {
 	select {
 	case <-done:
 	case <-time.After(time.Second):
-		t.Error("Cleanup did not return after the context was cancelled")
+		t.Error("Cleanup did not return after the context was canceled")
 	}
 }

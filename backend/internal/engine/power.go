@@ -14,7 +14,7 @@ import (
 // otherwise the result is irrational and is computed with big.Float at
 // irrationalPrecision, like an irrational square root.
 //
-// Special cases follow common calculator behaviour: 0^0 = 1, 0^x = 0 for x > 0,
+// Special cases follow common calculator behavior: 0^0 = 1, 0^x = 0 for x > 0,
 // 0^x for x < 0 is a division by zero, and a negative base with a fractional
 // exponent ((-8)^0.5) has no real result and is a DOMAIN_ERROR. Before any
 // expensive work the size of the result is estimated, and powers that would be
@@ -176,7 +176,7 @@ func integerRoot(n *big.Int, degree int64) (*big.Int, bool) {
 // converts it back to a fraction. base must be positive.
 //
 // checkPowerMagnitude normally rejects results that are out of range before
-// this runs. As a second line of defence, a result that big.Float itself
+// this runs. As a second line of defense, a result that big.Float itself
 // cannot represent (infinite, or so small that it becomes zero) is reported
 // as OVERFLOW instead of being converted.
 func approximatePower(base, exponent *big.Rat) (*big.Rat, error) {

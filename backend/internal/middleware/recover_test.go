@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -77,8 +78,9 @@ func TestRecover_ReraisesErrAbortHandler(t *testing.T) {
 	})
 
 	defer func() {
-		if recovered := recover(); recovered != http.ErrAbortHandler {
-			t.Errorf("recovered %v, want http.ErrAbortHandler to be re-panicked", recovered)
+		recoveredErr, _ := recover().(error)
+		if !errors.Is(recoveredErr, http.ErrAbortHandler) {
+			t.Errorf("recovered %v, want http.ErrAbortHandler to be re-panicked", recoveredErr)
 		}
 	}()
 	Recover(newBufferLogger(&buf), plainErrorWriter)(aborting).
