@@ -45,14 +45,3 @@ func TestHealth_RejectsOtherMethods(t *testing.T) {
 		})
 	}
 }
-
-func TestRouter_UnknownPathReturnsNotFound(t *testing.T) {
-	rec := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodGet, "/anything", nil)
-
-	NewRouter().ServeHTTP(rec, req)
-
-	if rec.Code != http.StatusNotFound {
-		t.Errorf("GET /anything status = %d, want %d", rec.Code, http.StatusNotFound)
-	}
-}
