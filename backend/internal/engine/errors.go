@@ -45,3 +45,8 @@ func (e *Error) Error() string {
 	}
 	return fmt.Sprintf("%s: %s at position %d", e.Code, e.Message, e.Position)
 }
+
+// newSyntaxError returns a SYNTAX_ERROR pointing at the given character position.
+func newSyntaxError(pos int, message string) *Error {
+	return &Error{Code: CodeSyntaxError, Message: message, Position: pos}
+}
