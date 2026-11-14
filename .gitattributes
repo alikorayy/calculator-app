@@ -1,0 +1,3 @@
+# Store text files with LF and check them out with LF on every OS,
+# so gofmt, linters and shell scripts behave the same on Windows, macOS and Linux.
+* text=auto eol=lf
