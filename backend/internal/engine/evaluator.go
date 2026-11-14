@@ -9,9 +9,25 @@ import (
 // depth-first: both operands of a node are evaluated before the node itself,
 // so the deepest operations run first.
 //
+// Every intermediate result must stay within the supported range (see
+// checkRange), so a chain of cheap operations such as 10^10000 * 10^10000
+// cannot grow past the limit either.
+//
 // Every operation allocates a new *big.Rat, so values stored in the tree are
 // never modified.
 func evaluate(n node) (*big.Rat, error) {
+	value, err := evaluateNode(n)
+	if err != nil {
+		return nil, err
+	}
+	if err := checkRange(value); err != nil {
+		return nil, err
+	}
+	return value, nil
+}
+
+// evaluateNode computes the value of a single node, evaluating its children first.
+func evaluateNode(n node) (*big.Rat, error) {
 	switch n := n.(type) {
 	case *numberNode:
 		return n.value, nil

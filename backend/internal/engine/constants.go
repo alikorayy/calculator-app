@@ -7,9 +7,13 @@ const (
 	maxExpressionLength = 256
 	// maxNumberDigits is the maximum number of significant digits in one number literal.
 	maxNumberDigits = 32
-	// maxResultExponent bounds the magnitude of a power: its result must lie
-	// between 10^-maxResultExponent and 10^maxResultExponent.
+	// maxResultExponent bounds the magnitude of every result, including
+	// intermediate ones: a non-zero value must lie between 10^-maxResultExponent
+	// and 10^maxResultExponent.
 	maxResultExponent = 10000
+	// rangeCheckMargin is how close (in powers of ten) an estimated magnitude
+	// must be to maxResultExponent before the range is checked exactly.
+	rangeCheckMargin = 1
 	// maxExactPowerBits bounds the size, in bits, of the numerator or denominator
 	// of an exactly computed power (about 30,000 decimal digits).
 	maxExactPowerBits = 100000

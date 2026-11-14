@@ -59,8 +59,9 @@ func powerOfPlusOrMinusOne(base *big.Rat, n *big.Int) *big.Rat {
 // only to estimate sizes, never to compute a result.
 //
 // Two different limits apply:
-//   - magnitude: the result must lie between 10^-maxResultExponent and
-//     10^maxResultExponent, otherwise it is OVERFLOW;
+//   - magnitude: a result that is clearly outside 10^-maxResultExponent ..
+//     10^maxResultExponent is OVERFLOW; results close to the limit are
+//     computed and then decided exactly by checkRange;
 //   - exact size: numerator and denominator grow by a factor of n, so a base
 //     with many digits and a large exponent can be in range yet need millions
 //     of digits to represent exactly (e.g. 1.000…001^1000); that is LIMIT_EXCEEDED.
@@ -69,7 +70,7 @@ func checkPowerSize(base *big.Rat, n *big.Int) error {
 	absN = math.Abs(absN)
 
 	magnitude := absN * math.Abs(log10Abs(base.Num())-log10Abs(base.Denom()))
-	if magnitude > maxResultExponent {
+	if magnitude > maxResultExponent+rangeCheckMargin {
 		return newError(CodeOverflow, msgOutOfRange)
 	}
 
@@ -92,13 +93,4 @@ func exactPower(base *big.Rat, n *big.Int) *big.Rat {
 		result.Inv(result)
 	}
 	return result
-}
-
-// log10Abs estimates log10(|x|) for x != 0 from its 64 most significant bits,
-// so it works for integers far beyond the float64 range.
-func log10Abs(x *big.Int) float64 {
-	const mantissaBits = 64
-	shift := max(x.BitLen()-mantissaBits, 0)
-	top := new(big.Int).Rsh(new(big.Int).Abs(x), uint(shift))
-	return math.Log10(float64(top.Uint64())) + float64(shift)*math.Log10(2)
 }
