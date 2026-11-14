@@ -10,7 +10,8 @@ import (
 //
 //	expression := term (('+' | '-') term)*
 //	term       := unary (('*' | '/') unary)*
-//	unary      := ('-' | '+') unary | primary
+//	unary      := ('-' | '+') unary | power
+//	power      := primary ('^' unary)?
 //	primary    := NUMBER | '(' expression ')'
 //
 // Because expression is built out of terms, '*' and '/' bind tighter than
@@ -19,6 +20,11 @@ import (
 //
 // A sign in front of an operand is unary and binds tighter than '*' and '/':
 // -2 * 3 = (-2) * 3. Signs can be repeated: --5 = 5.
+//
+// '^' binds tighter than a sign, so -2^2 = -(2^2) = -4, as on Google and in
+// standard mathematical notation. Its exponent is parsed as a unary, which
+// makes '^' right-associative (2^3^2 = 2^(3^2) = 512) and allows a signed
+// exponent (2^-1 = 0.5).
 
 // parser holds the tokens of one expression and a cursor into them.
 type parser struct {
@@ -113,8 +119,26 @@ func (p *parser) parseUnary() (node, error) {
 		p.advance()
 		return p.parseUnary()
 	default:
-		return p.parsePrimary()
+		return p.parsePower()
 	}
+}
+
+// parsePower handles '^'. The exponent may itself contain '^' or a sign, so it
+// is parsed by parseUnary; this recursion makes '^' right-associative.
+func (p *parser) parsePower() (node, error) {
+	base, err := p.parsePrimary()
+	if err != nil {
+		return nil, err
+	}
+	if p.peek().kind != tokenPower {
+		return base, nil
+	}
+	op := p.advance()
+	exponent, err := p.parseUnary()
+	if err != nil {
+		return nil, err
+	}
+	return &binaryNode{op: op.kind, left: base, right: exponent}, nil
 }
 
 // parsePrimary handles a number or a parenthesized sub-expression.

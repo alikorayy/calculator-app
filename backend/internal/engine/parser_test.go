@@ -32,6 +32,13 @@ func TestParse_BuildsTreeWithPrecedence(t *testing.T) {
 		{"double negation", "--5", "(-(-5))"},
 		{"unary plus is dropped", "+5", "5"},
 		{"mixed signs", "-+-5", "(-(-5))"},
+		{"power", "2^3", "(2 ^ 3)"},
+		{"power is right-associative", "2^3^2", "(2 ^ (3 ^ 2))"},
+		{"power binds tighter than a sign", "-2^2", "(-(2 ^ 2))"},
+		{"parenthesized negative base", "(-2)^2", "((-2) ^ 2)"},
+		{"negative exponent", "2^-1", "(2 ^ (-1))"},
+		{"power binds tighter than multiplication", "2*3^2", "(2 * (3 ^ 2))"},
+		{"power before multiplication in source", "2^3*2", "((2 ^ 3) * 2)"},
 	}
 
 	for _, tt := range tests {
@@ -65,6 +72,9 @@ func TestParse_SyntaxErrors(t *testing.T) {
 		{"empty parentheses", "()", `Unexpected ")"`, 1},
 		{"sign without operand", "-", "Unexpected end of expression", 1},
 		{"sign before an operator", "2*-/3", `Unexpected "/"`, 3},
+		{"power without exponent", "2^", "Unexpected end of expression", 2},
+		{"power without base", "^2", `Unexpected "^"`, 0},
+		{"double power operator", "2^^3", `Unexpected "^"`, 2},
 		{"tokenizer error is passed through", "2&3", "Unexpected character '&'", 1},
 	}
 

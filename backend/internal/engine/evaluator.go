@@ -49,6 +49,8 @@ func evaluateBinary(n *binaryNode) (*big.Rat, error) {
 		return new(big.Rat).Mul(left, right), nil
 	case tokenDivide:
 		return divide(left, right)
+	case tokenPower:
+		return power(left, right)
 	default:
 		return nil, fmt.Errorf("engine: unsupported binary operator %d", n.op)
 	}

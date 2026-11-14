@@ -7,6 +7,12 @@ const (
 	maxExpressionLength = 256
 	// maxNumberDigits is the maximum number of significant digits in one number literal.
 	maxNumberDigits = 32
+	// maxResultExponent bounds the magnitude of a power: its result must lie
+	// between 10^-maxResultExponent and 10^maxResultExponent.
+	maxResultExponent = 10000
+	// maxExactPowerBits bounds the size, in bits, of the numerator or denominator
+	// of an exactly computed power (about 30,000 decimal digits).
+	maxExactPowerBits = 100000
 )
 
 // User-facing error messages. Format verbs are filled in with the offending input.
@@ -22,6 +28,9 @@ const (
 	msgMissingClosingParen = "Missing closing parenthesis"
 	msgDivisionByZero      = "Cannot divide by zero"
 	msgUndefinedResult     = "Result is undefined"
+	msgOutOfRange          = "Result is out of range"
+	msgExponentTooLarge    = "Exponent is too large"
+	msgFractionalExponent  = "Fractional exponents are not supported yet"
 )
 
 // Characters and names with a fixed meaning in an expression.

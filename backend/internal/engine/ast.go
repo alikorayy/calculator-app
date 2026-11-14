@@ -52,6 +52,8 @@ func operatorSymbol(kind tokenKind) string {
 		return "*"
 	case tokenDivide:
 		return "/"
+	case tokenPower:
+		return "^"
 	default:
 		return "?"
 	}
