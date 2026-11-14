@@ -9,7 +9,7 @@ import (
 // method, and a rule calls the rule of the next higher precedence level:
 //
 //	expression := term (('+' | '-') term)*
-//	term       := unary (('*' | '/') unary)*
+//	term       := unary (('*' | '/' | implicit) unary)*
 //	unary      := ('-' | '+') unary | power
 //	power      := postfix ('^' unary)?
 //	postfix    := primary ('%')*
@@ -32,11 +32,24 @@ import (
 //
 // The square root (√ or sqrt) is used only in function form with parentheses,
 // as on Google: √(9). This leaves no doubt about how much it covers.
+//
+// A multiplication sign may be left out before a parenthesis or a square root,
+// and between a closing parenthesis and a number: 2(3+1), (1+2)(3+4), 2√(9),
+// (2)3. Such an implicit multiplication has the same precedence as '*' and is
+// evaluated left to right, as on Google: 6/2(1+2) = (6/2)*3 = 9. Two numbers
+// in a row ("2 3") are still a syntax error.
+//
+// Parentheses (including those of a square root) may be nested at most
+// maxNestingDepth levels deep, which also bounds the parser's recursion.
 
 // parser holds the tokens of one expression and a cursor into them.
 type parser struct {
 	tokens []token
 	pos    int
+	// previous is the kind of the most recently consumed token.
+	previous tokenKind
+	// depth is the number of currently open parentheses.
+	depth int
 }
 
 // parse turns expr into an AST, or returns a SYNTAX_ERROR pointing at the
@@ -47,7 +60,7 @@ func parse(expr string) (node, error) {
 		return nil, err
 	}
 
-	p := &parser{tokens: tokens}
+	p := &parser{tokens: tokens, previous: tokenEOF}
 	if p.peek().kind == tokenEOF {
 		return nil, newSyntaxError(0, msgEmptyExpression)
 	}
@@ -74,6 +87,7 @@ func (p *parser) advance() token {
 	if t.kind != tokenEOF {
 		p.pos++
 	}
+	p.previous = t.kind
 	return t
 }
 
@@ -94,21 +108,42 @@ func (p *parser) parseExpression() (node, error) {
 	return left, nil
 }
 
-// parseTerm handles '*' and '/', which bind tighter than '+' and '-'.
+// parseTerm handles '*', '/' and implicit multiplication, which bind tighter
+// than '+' and '-'.
 func (p *parser) parseTerm() (node, error) {
 	left, err := p.parseUnary()
 	if err != nil {
 		return nil, err
 	}
-	for p.peek().kind == tokenMultiply || p.peek().kind == tokenDivide {
-		op := p.advance()
+	for {
+		var op tokenKind
+		switch {
+		case p.peek().kind == tokenMultiply || p.peek().kind == tokenDivide:
+			op = p.advance().kind
+		case p.startsImplicitMultiplication():
+			op = tokenMultiply
+		default:
+			return left, nil
+		}
 		right, err := p.parseUnary()
 		if err != nil {
 			return nil, err
 		}
-		left = &binaryNode{op: op.kind, left: left, right: right}
+		left = &binaryNode{op: op, left: left, right: right}
 	}
-	return left, nil
+}
+
+// startsImplicitMultiplication reports whether the next token starts a new
+// factor directly after the previous one, with the '*' left out.
+func (p *parser) startsImplicitMultiplication() bool {
+	switch p.peek().kind {
+	case tokenLeftParen, tokenSqrt:
+		return p.previous == tokenNumber || p.previous == tokenRightParen || p.previous == tokenPercent
+	case tokenNumber:
+		return p.previous == tokenRightParen
+	default:
+		return false
+	}
 }
 
 // parseUnary handles a leading sign. '-' negates its operand; '+' changes
@@ -180,7 +215,13 @@ func (p *parser) parsePrimary() (node, error) {
 // parseParenthesized handles '(' expression ')'. The parentheses only shape
 // the tree; they do not appear in it.
 func (p *parser) parseParenthesized() (node, error) {
-	p.advance()
+	opening := p.advance()
+	p.depth++
+	defer func() { p.depth-- }()
+	if p.depth > maxNestingDepth {
+		return nil, newErrorAt(CodeLimitExceeded, opening.pos, fmt.Sprintf(msgNestedTooDeeply, maxNestingDepth))
+	}
+
 	inner, err := p.parseExpression()
 	if err != nil {
 		return nil, err

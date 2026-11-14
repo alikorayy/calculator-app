@@ -2,8 +2,54 @@ package engine
 
 import (
 	"errors"
+	"strings"
 	"testing"
 )
+
+func TestParse_NestingLimit(t *testing.T) {
+	nested := func(depth int, open string) string {
+		return strings.Repeat(open, depth) + "1" + strings.Repeat(")", depth)
+	}
+
+	t.Run("at the limit", func(t *testing.T) {
+		for _, open := range []string{"(", "√("} {
+			if _, err := parse(nested(maxNestingDepth, open)); err != nil {
+				t.Errorf("%d levels of %q: unexpected error: %v", maxNestingDepth, open, err)
+			}
+		}
+	})
+
+	t.Run("one level too deep", func(t *testing.T) {
+		tests := []struct {
+			open    string
+			wantPos int
+		}{
+			{"(", maxNestingDepth},
+			{"√(", 2*maxNestingDepth + 1},
+		}
+		for _, tt := range tests {
+			_, err := parse(nested(maxNestingDepth+1, tt.open))
+
+			var engineErr *Error
+			if !errors.As(err, &engineErr) {
+				t.Fatalf("%q nested too deeply: error = %v, want *Error", tt.open, err)
+			}
+			if engineErr.Code != CodeLimitExceeded {
+				t.Errorf("%q: Code = %q, want %q", tt.open, engineErr.Code, CodeLimitExceeded)
+			}
+			if engineErr.Position != tt.wantPos {
+				t.Errorf("%q: Position = %d, want %d", tt.open, engineErr.Position, tt.wantPos)
+			}
+		}
+	})
+
+	t.Run("sequential parentheses do not add up", func(t *testing.T) {
+		sequential := strings.Repeat("(1)+", maxNestingDepth+1) + "1"
+		if _, err := parse(sequential); err != nil {
+			t.Errorf("sequential parentheses: unexpected error: %v", err)
+		}
+	})
+}
 
 func TestParse_BuildsTreeWithPrecedence(t *testing.T) {
 	tests := []struct {
@@ -51,6 +97,16 @@ func TestParse_BuildsTreeWithPrecedence(t *testing.T) {
 		{"square root as a power base", "√(4)^2", "(sqrt(4) ^ 2)"},
 		{"nested square roots", "√(√(16))", "sqrt(sqrt(16))"},
 		{"square root of an expression", "√(3^2+4^2)", "sqrt(((3 ^ 2) + (4 ^ 2)))"},
+		{"implicit multiplication before a parenthesis", "2(3+1)", "(2 * (3 + 1))"},
+		{"implicit multiplication between parentheses", "(1+2)(3+4)", "((1 + 2) * (3 + 4))"},
+		{"implicit multiplication after a parenthesis", "(2)3", "(2 * 3)"},
+		{"implicit multiplication before a square root", "2√(9)", "(2 * sqrt(9))"},
+		{"implicit multiplication after a percent", "10%(5)", "((10%) * 5)"},
+		{"implicit multiplication is left to right with division", "6/2(1+2)", "((6 / 2) * (1 + 2))"},
+		{"implicit multiplication binds looser than power", "2(3)^2", "(2 * (3 ^ 2))"},
+		{"implicit multiplication after a power", "2^3(4)", "((2 ^ 3) * 4)"},
+		{"implicit multiplication after a sign", "-2(3)", "((-2) * 3)"},
+		{"implicit multiplication inside a sum", "1+2(3)", "(1 + (2 * 3))"},
 	}
 
 	for _, tt := range tests {
@@ -93,6 +149,8 @@ func TestParse_SyntaxErrors(t *testing.T) {
 		{"square root name at the end", "2+sqrt", `Expected "(" after "sqrt"`, 6},
 		{"unclosed square root", "√(9", "Missing closing parenthesis", 3},
 		{"empty square root", "√()", `Unexpected ")"`, 2},
+		{"number after a number is not implicit multiplication", "2 3", `Unexpected "3"`, 2},
+		{"number after a percent is not implicit multiplication", "10%5", `Unexpected "5"`, 3},
 		{"tokenizer error is passed through", "2&3", "Unexpected character '&'", 1},
 	}
 

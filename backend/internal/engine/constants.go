@@ -7,6 +7,8 @@ const (
 	maxExpressionLength = 256
 	// maxNumberDigits is the maximum number of significant digits in one number literal.
 	maxNumberDigits = 32
+	// maxNestingDepth is the maximum number of nested parentheses.
+	maxNestingDepth = 32
 	// maxResultExponent bounds the magnitude of every result, including
 	// intermediate ones: a non-zero value must lie between 10^-maxResultExponent
 	// and 10^maxResultExponent.
@@ -26,6 +28,7 @@ const (
 	msgUnknownName         = "Unknown name %q"
 	msgExpressionTooLong   = "Expression is too long (maximum %d characters)"
 	msgTooManyDigits       = "Number has too many digits (maximum %d)"
+	msgNestedTooDeeply     = "Parentheses are nested too deeply (maximum %d levels)"
 	msgEmptyExpression     = "Expression is empty"
 	msgUnexpectedEnd       = "Unexpected end of expression"
 	msgUnexpectedToken     = "Unexpected %q"

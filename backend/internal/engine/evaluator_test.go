@@ -41,6 +41,10 @@ func TestEvaluate_ExactArithmetic(t *testing.T) {
 		{"negated parentheses", "-(1+2)", "-3"},
 		{"double negation", "--5", "5"},
 		{"negative zero is zero", "-0", "0"},
+		{"implicit multiplication", "2(3+1)", "8"},
+		{"implicit multiplication between parentheses", "(1+2)(3+4)", "21"},
+		{"implicit multiplication with a square root", "2√(9)", "6"},
+		{"famous ambiguous expression, Google convention", "6/2(1+2)", "9"},
 		{"zero divided by a number", "0/5", "0"},
 		{"numbers beyond 64 bits stay exact", "99999999999999999999*99999999999999999999", "9999999999999999999800000000000000000001"},
 	}
