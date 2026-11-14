@@ -8,6 +8,8 @@ const (
 	msgUnexpectedEnd       = "Unexpected end of expression"
 	msgUnexpectedToken     = "Unexpected %q"
 	msgMissingClosingParen = "Missing closing parenthesis"
+	msgDivisionByZero      = "Cannot divide by zero"
+	msgUndefinedResult     = "Result is undefined"
 )
 
 // Characters with a fixed meaning in a number literal.
