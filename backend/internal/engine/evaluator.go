@@ -43,6 +43,12 @@ func evaluateNode(n node) (*big.Rat, error) {
 			return nil, err
 		}
 		return new(big.Rat).Quo(operand, big.NewRat(percentBase, 1)), nil
+	case *sqrtNode:
+		operand, err := evaluate(n.operand)
+		if err != nil {
+			return nil, err
+		}
+		return squareRoot(operand)
 	case *binaryNode:
 		return evaluateBinary(n)
 	default:

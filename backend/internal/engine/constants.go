@@ -35,7 +35,14 @@ const (
 	msgOutOfRange          = "Result is out of range"
 	msgExponentTooLarge    = "Exponent is too large"
 	msgFractionalExponent  = "Fractional exponents are not supported yet"
+	msgInvalidInput        = "Invalid input"
+	msgExpectedParenAfter  = "Expected \"(\" after %q"
 )
+
+// sqrtPrecision is the big.Float precision, in bits, used for irrational
+// square roots. 256 bits is about 77 significant decimal digits, far more than
+// the 16 digits that are displayed.
+const sqrtPrecision = 256
 
 // percentBase is the divisor that turns a percentage into a fraction: 10% = 10/100.
 const percentBase = 100

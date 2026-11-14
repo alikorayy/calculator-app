@@ -39,6 +39,15 @@ func (n *percentNode) String() string {
 	return fmt.Sprintf("(%s%%)", n.operand)
 }
 
+// sqrtNode is the square root of its operand, e.g. √(9).
+type sqrtNode struct {
+	operand node
+}
+
+func (n *sqrtNode) String() string {
+	return fmt.Sprintf("sqrt(%s)", n.operand)
+}
+
 // binaryNode applies an operator to two operands, e.g. left + right.
 type binaryNode struct {
 	op    tokenKind

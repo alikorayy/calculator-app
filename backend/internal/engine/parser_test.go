@@ -44,6 +44,13 @@ func TestParse_BuildsTreeWithPrecedence(t *testing.T) {
 		{"percent binds tighter than power", "10%^2", "((10%) ^ 2)"},
 		{"repeated percent", "50%%", "((50%)%)"},
 		{"percent of parentheses", "(10+20)%", "((10 + 20)%)"},
+		{"square root symbol", "√(9)", "sqrt(9)"},
+		{"square root name in any case", "SQRT(9)", "sqrt(9)"},
+		{"square root in a sum", "sqrt(4)+1", "(sqrt(4) + 1)"},
+		{"negated square root", "-√(4)", "(-sqrt(4))"},
+		{"square root as a power base", "√(4)^2", "(sqrt(4) ^ 2)"},
+		{"nested square roots", "√(√(16))", "sqrt(sqrt(16))"},
+		{"square root of an expression", "√(3^2+4^2)", "sqrt(((3 ^ 2) + (4 ^ 2)))"},
 	}
 
 	for _, tt := range tests {
@@ -82,6 +89,10 @@ func TestParse_SyntaxErrors(t *testing.T) {
 		{"double power operator", "2^^3", `Unexpected "^"`, 2},
 		{"percent without operand", "%", `Unexpected "%"`, 0},
 		{"percent after an operator", "50+%", `Unexpected "%"`, 3},
+		{"square root without parentheses", "√9", `Expected "(" after "√"`, 1},
+		{"square root name at the end", "2+sqrt", `Expected "(" after "sqrt"`, 6},
+		{"unclosed square root", "√(9", "Missing closing parenthesis", 3},
+		{"empty square root", "√()", `Unexpected ")"`, 2},
 		{"tokenizer error is passed through", "2&3", "Unexpected character '&'", 1},
 	}
 

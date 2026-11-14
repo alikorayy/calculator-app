@@ -13,7 +13,7 @@ import (
 //	unary      := ('-' | '+') unary | power
 //	power      := postfix ('^' unary)?
 //	postfix    := primary ('%')*
-//	primary    := NUMBER | '(' expression ')'
+//	primary    := NUMBER | '(' expression ')' | SQRT '(' expression ')'
 //
 // Because expression is built out of terms, '*' and '/' bind tighter than
 // '+' and '-'. The loops build the tree left to right, so operators of the same
@@ -29,6 +29,9 @@ import (
 //
 // '%' is a postfix operator that binds tightest of all: 10%^2 = (10%)^2.
 // What a percentage means depends on where it is used; see evaluateBinary.
+//
+// The square root (√ or sqrt) is used only in function form with parentheses,
+// as on Google: √(9). This leaves no doubt about how much it covers.
 
 // parser holds the tokens of one expression and a cursor into them.
 type parser struct {
@@ -158,7 +161,7 @@ func (p *parser) parsePostfix() (node, error) {
 	return operand, nil
 }
 
-// parsePrimary handles a number or a parenthesized sub-expression.
+// parsePrimary handles a number, a parenthesized sub-expression or a square root.
 func (p *parser) parsePrimary() (node, error) {
 	t := p.peek()
 	switch t.kind {
@@ -166,19 +169,40 @@ func (p *parser) parsePrimary() (node, error) {
 		p.advance()
 		return parseNumber(t)
 	case tokenLeftParen:
-		p.advance()
-		inner, err := p.parseExpression()
-		if err != nil {
-			return nil, err
-		}
-		if closing := p.peek(); closing.kind != tokenRightParen {
-			return nil, newSyntaxError(closing.pos, msgMissingClosingParen)
-		}
-		p.advance()
-		return inner, nil
+		return p.parseParenthesized()
+	case tokenSqrt:
+		return p.parseSqrt()
 	default:
 		return nil, unexpectedToken(t)
 	}
+}
+
+// parseParenthesized handles '(' expression ')'. The parentheses only shape
+// the tree; they do not appear in it.
+func (p *parser) parseParenthesized() (node, error) {
+	p.advance()
+	inner, err := p.parseExpression()
+	if err != nil {
+		return nil, err
+	}
+	if closing := p.peek(); closing.kind != tokenRightParen {
+		return nil, newSyntaxError(closing.pos, msgMissingClosingParen)
+	}
+	p.advance()
+	return inner, nil
+}
+
+// parseSqrt handles √(expression) and sqrt(expression).
+func (p *parser) parseSqrt() (node, error) {
+	sqrt := p.advance()
+	if next := p.peek(); next.kind != tokenLeftParen {
+		return nil, newSyntaxError(next.pos, fmt.Sprintf(msgExpectedParenAfter, sqrt.text))
+	}
+	operand, err := p.parseParenthesized()
+	if err != nil {
+		return nil, err
+	}
+	return &sqrtNode{operand: operand}, nil
 }
 
 // parseNumber converts a number token into an exact rational.
