@@ -51,7 +51,12 @@ func newError(code Code, message string) *Error {
 	return &Error{Code: code, Message: message, Position: NoPosition}
 }
 
+// newErrorAt returns an error pointing at the given character position.
+func newErrorAt(code Code, pos int, message string) *Error {
+	return &Error{Code: code, Message: message, Position: pos}
+}
+
 // newSyntaxError returns a SYNTAX_ERROR pointing at the given character position.
 func newSyntaxError(pos int, message string) *Error {
-	return &Error{Code: CodeSyntaxError, Message: message, Position: pos}
+	return newErrorAt(CodeSyntaxError, pos, message)
 }
