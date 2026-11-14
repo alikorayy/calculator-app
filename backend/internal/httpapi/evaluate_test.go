@@ -1,8 +1,10 @@
 package httpapi
 
 import (
+	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 )
 
@@ -127,6 +129,32 @@ func TestEvaluate_MalformedRequests(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			rec := postJSON(t, evaluatePath, tt.contentType, tt.body)
 			assertResponse(t, rec, tt.wantStatus, tt.wantBody)
+		})
+	}
+}
+
+func TestEvaluate_BodyCutOffByTheSizeLimitIs413(t *testing.T) {
+	const object = `{"expression":"1"}`
+	tests := []struct {
+		name  string
+		body  string
+		limit int64
+	}{
+		{"limit reached inside the object", `{"expression":"` + strings.Repeat("1", 100) + `"}`, 20},
+		{"limit reached after the object", object + strings.Repeat(" ", 100), int64(len(object)) + 10},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			req := httptest.NewRequest(http.MethodPost, evaluatePath, strings.NewReader(tt.body))
+			req.Header.Set(headerContentType, contentTypeJSON)
+			rec := httptest.NewRecorder()
+			req.Body = http.MaxBytesReader(rec, req.Body, tt.limit)
+
+			newTestRouter().ServeHTTP(rec, req)
+
+			assertResponse(t, rec, http.StatusRequestEntityTooLarge, fmt.Sprintf(
+				`{"error":{"code":"PAYLOAD_TOO_LARGE","message":"Request body is too large (maximum %d bytes)"}}`, tt.limit))
 		})
 	}
 }

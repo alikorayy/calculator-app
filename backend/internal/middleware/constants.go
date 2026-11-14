@@ -49,4 +49,7 @@ const (
 const (
 	codeInternalError    = "INTERNAL_ERROR"
 	messageInternalError = "An unexpected error occurred"
+
+	codePayloadTooLarge    = "PAYLOAD_TOO_LARGE"
+	messagePayloadTooLarge = "Request body is too large (maximum %d bytes)"
 )

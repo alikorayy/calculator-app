@@ -27,6 +27,7 @@ func TestLoad_Defaults(t *testing.T) {
 		IdleTimeout:     DefaultIdleTimeout,
 		ShutdownTimeout: DefaultShutdownTimeout,
 		LogLevel:        DefaultLogLevel,
+		MaxBodyBytes:    DefaultMaxBodyBytes,
 	}
 	if cfg != want {
 		t.Errorf("Load() = %+v, want %+v", cfg, want)
@@ -41,6 +42,7 @@ func TestLoad_Overrides(t *testing.T) {
 		EnvIdleTimeout:     "3m",
 		EnvShutdownTimeout: "500ms",
 		EnvLogLevel:        "debug",
+		EnvMaxBodyBytes:    "1024",
 	}
 
 	cfg, err := Load(lookupFrom(env))
@@ -55,6 +57,7 @@ func TestLoad_Overrides(t *testing.T) {
 		IdleTimeout:     3 * time.Minute,
 		ShutdownTimeout: 500 * time.Millisecond,
 		LogLevel:        slog.LevelDebug,
+		MaxBodyBytes:    1024,
 	}
 	if cfg != want {
 		t.Errorf("Load() = %+v, want %+v", cfg, want)
@@ -76,6 +79,9 @@ func TestLoad_InvalidValues(t *testing.T) {
 		{"idle timeout zero", EnvIdleTimeout, "0s"},
 		{"shutdown timeout negative", EnvShutdownTimeout, "-5s"},
 		{"unknown log level", EnvLogLevel, "verbose"},
+		{"body limit not a number", EnvMaxBodyBytes, "4KB"},
+		{"body limit zero", EnvMaxBodyBytes, "0"},
+		{"body limit negative", EnvMaxBodyBytes, "-1"},
 	}
 
 	for _, tt := range tests {

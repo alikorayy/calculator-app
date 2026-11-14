@@ -22,6 +22,9 @@ type decodeFailure struct {
 // Content-Type must be application/json, the body must be exactly one JSON
 // object, and fields that dst does not declare are rejected. It returns nil on
 // success.
+//
+// A body cut off by http.MaxBytesReader (see middleware.MaxBodySize) is
+// reported as 413 rather than as invalid JSON.
 func decodeJSONBody(r *http.Request, dst any) *decodeFailure {
 	if !hasJSONContentType(r) {
 		return &decodeFailure{http.StatusUnsupportedMediaType, codeUnsupportedMediaType, messageUnsupportedMediaType}
@@ -32,10 +35,21 @@ func decodeJSONBody(r *http.Request, dst any) *decodeFailure {
 	if err := decoder.Decode(dst); err != nil {
 		return describeDecodeError(err)
 	}
-	if err := decoder.Decode(&struct{}{}); !errors.Is(err, io.EOF) {
+	err := decoder.Decode(&struct{}{})
+	switch {
+	case errors.Is(err, io.EOF):
+		return nil
+	case isBodyTooLarge(err):
+		return describeDecodeError(err)
+	default:
 		return invalidRequest(messageTrailingData)
 	}
-	return nil
+}
+
+// isBodyTooLarge reports whether err comes from reading past the body limit.
+func isBodyTooLarge(err error) bool {
+	var maxBytesErr *http.MaxBytesError
+	return errors.As(err, &maxBytesErr)
 }
 
 // hasJSONContentType reports whether the request declares a JSON body.
@@ -48,7 +62,10 @@ func hasJSONContentType(r *http.Request) bool {
 // describeDecodeError turns an encoding/json error into a client-facing message.
 func describeDecodeError(err error) *decodeFailure {
 	var typeErr *json.UnmarshalTypeError
+	var maxBytesErr *http.MaxBytesError
 	switch {
+	case errors.As(err, &maxBytesErr):
+		return &decodeFailure{http.StatusRequestEntityTooLarge, codePayloadTooLarge, fmt.Sprintf(messagePayloadTooLarge, maxBytesErr.Limit)}
 	case errors.Is(err, io.EOF):
 		return invalidRequest(messageEmptyBody)
 	case errors.As(err, &typeErr) && typeErr.Field == "":

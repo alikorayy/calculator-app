@@ -16,6 +16,8 @@ type Config struct {
 	IdleTimeout     time.Duration
 	ShutdownTimeout time.Duration
 	LogLevel        slog.Level
+	// MaxBodyBytes is the largest request body accepted, in bytes.
+	MaxBodyBytes int64
 }
 
 // LookupFunc returns the value of an environment variable and whether it is set.
@@ -33,6 +35,7 @@ func Load(lookup LookupFunc) (Config, error) {
 		IdleTimeout:     DefaultIdleTimeout,
 		ShutdownTimeout: DefaultShutdownTimeout,
 		LogLevel:        DefaultLogLevel,
+		MaxBodyBytes:    DefaultMaxBodyBytes,
 	}
 
 	if err := loadPort(lookup, &cfg.Port); err != nil {
@@ -55,6 +58,9 @@ func Load(lookup LookupFunc) (Config, error) {
 	}
 
 	if err := loadLogLevel(lookup, &cfg.LogLevel); err != nil {
+		return Config{}, err
+	}
+	if err := loadPositiveInt(lookup, EnvMaxBodyBytes, &cfg.MaxBodyBytes); err != nil {
 		return Config{}, err
 	}
 
@@ -89,6 +95,19 @@ func loadDuration(lookup LookupFunc, key string, target *time.Duration) error {
 		return fmt.Errorf("config: %s must be a positive duration such as \"5s\", got %q", key, raw)
 	}
 	*target = d
+	return nil
+}
+
+func loadPositiveInt(lookup LookupFunc, key string, target *int64) error {
+	raw, ok := lookup(key)
+	if !ok {
+		return nil
+	}
+	value, err := strconv.ParseInt(raw, 10, 64)
+	if err != nil || value <= 0 {
+		return fmt.Errorf("config: %s must be a positive integer, got %q", key, raw)
+	}
+	*target = value
 	return nil
 }
 

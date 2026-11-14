@@ -21,6 +21,7 @@ const (
 	codeMethodNotAllowed     = "METHOD_NOT_ALLOWED"
 	codeInvalidRequest       = "INVALID_REQUEST"
 	codeUnsupportedMediaType = "UNSUPPORTED_MEDIA_TYPE"
+	codePayloadTooLarge      = "PAYLOAD_TOO_LARGE"
 )
 
 // Error messages returned in the error envelope. Format verbs are filled in
@@ -38,6 +39,7 @@ const (
 	messageWrongFieldType       = "Field %q has the wrong type"
 	messageMissingField         = "Field %q is required"
 	messageInvalidOperandType   = "Operand %d must be a string or a number"
+	messagePayloadTooLarge      = "Request body is too large (maximum %d bytes)"
 )
 
 // jsonUnknownFieldPrefix starts the error text encoding/json returns for a

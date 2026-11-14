@@ -13,6 +13,7 @@ const (
 	EnvIdleTimeout     = "IDLE_TIMEOUT"
 	EnvShutdownTimeout = "SHUTDOWN_TIMEOUT"
 	EnvLogLevel        = "LOG_LEVEL"
+	EnvMaxBodyBytes    = "MAX_BODY_BYTES"
 )
 
 // Default values used when an environment variable is not set.
@@ -23,6 +24,9 @@ const (
 	DefaultIdleTimeout     = 60 * time.Second
 	DefaultShutdownTimeout = 10 * time.Second
 	DefaultLogLevel        = slog.LevelInfo
+	// DefaultMaxBodyBytes (4 KiB) is far above the largest valid request: an
+	// expression is at most 256 characters.
+	DefaultMaxBodyBytes = 4 << 10
 )
 
 // Valid TCP port range.
