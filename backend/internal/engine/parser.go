@@ -11,7 +11,8 @@ import (
 //	expression := term (('+' | '-') term)*
 //	term       := unary (('*' | '/') unary)*
 //	unary      := ('-' | '+') unary | power
-//	power      := primary ('^' unary)?
+//	power      := postfix ('^' unary)?
+//	postfix    := primary ('%')*
 //	primary    := NUMBER | '(' expression ')'
 //
 // Because expression is built out of terms, '*' and '/' bind tighter than
@@ -25,6 +26,9 @@ import (
 // standard mathematical notation. Its exponent is parsed as a unary, which
 // makes '^' right-associative (2^3^2 = 2^(3^2) = 512) and allows a signed
 // exponent (2^-1 = 0.5).
+//
+// '%' is a postfix operator that binds tightest of all: 10%^2 = (10%)^2.
+// What a percentage means depends on where it is used; see evaluateBinary.
 
 // parser holds the tokens of one expression and a cursor into them.
 type parser struct {
@@ -126,7 +130,7 @@ func (p *parser) parseUnary() (node, error) {
 // parsePower handles '^'. The exponent may itself contain '^' or a sign, so it
 // is parsed by parseUnary; this recursion makes '^' right-associative.
 func (p *parser) parsePower() (node, error) {
-	base, err := p.parsePrimary()
+	base, err := p.parsePostfix()
 	if err != nil {
 		return nil, err
 	}
@@ -139,6 +143,19 @@ func (p *parser) parsePower() (node, error) {
 		return nil, err
 	}
 	return &binaryNode{op: op.kind, left: base, right: exponent}, nil
+}
+
+// parsePostfix handles any number of '%' signs after an operand: 50%%.
+func (p *parser) parsePostfix() (node, error) {
+	operand, err := p.parsePrimary()
+	if err != nil {
+		return nil, err
+	}
+	for p.peek().kind == tokenPercent {
+		p.advance()
+		operand = &percentNode{operand: operand}
+	}
+	return operand, nil
 }
 
 // parsePrimary handles a number or a parenthesized sub-expression.

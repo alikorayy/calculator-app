@@ -33,6 +33,9 @@ const (
 	msgFractionalExponent  = "Fractional exponents are not supported yet"
 )
 
+// percentBase is the divisor that turns a percentage into a fraction: 10% = 10/100.
+const percentBase = 100
+
 // Characters and names with a fixed meaning in an expression.
 const (
 	decimalSeparator = '.'

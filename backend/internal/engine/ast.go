@@ -30,6 +30,15 @@ func (n *negateNode) String() string {
 	return fmt.Sprintf("(-%s)", n.operand)
 }
 
+// percentNode is an operand followed by '%', e.g. 10%.
+type percentNode struct {
+	operand node
+}
+
+func (n *percentNode) String() string {
+	return fmt.Sprintf("(%s%%)", n.operand)
+}
+
 // binaryNode applies an operator to two operands, e.g. left + right.
 type binaryNode struct {
 	op    tokenKind

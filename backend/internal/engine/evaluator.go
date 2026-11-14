@@ -21,6 +21,12 @@ func evaluate(n node) (*big.Rat, error) {
 			return nil, err
 		}
 		return new(big.Rat).Neg(operand), nil
+	case *percentNode:
+		operand, err := evaluate(n.operand)
+		if err != nil {
+			return nil, err
+		}
+		return new(big.Rat).Quo(operand, big.NewRat(percentBase, 1)), nil
 	case *binaryNode:
 		return evaluateBinary(n)
 	default:
@@ -35,7 +41,7 @@ func evaluateBinary(n *binaryNode) (*big.Rat, error) {
 	if err != nil {
 		return nil, err
 	}
-	right, err := evaluate(n.right)
+	right, err := evaluateRightOperand(n, left)
 	if err != nil {
 		return nil, err
 	}
@@ -54,6 +60,22 @@ func evaluateBinary(n *binaryNode) (*big.Rat, error) {
 	default:
 		return nil, fmt.Errorf("engine: unsupported binary operator %d", n.op)
 	}
+}
+
+// evaluateRightOperand evaluates the right operand of n. When the whole right
+// operand of '+' or '-' is a percentage, it is a percentage of the left
+// operand, as on Google and Windows calculators: 50 + 10% = 50 + 5 = 55.
+// Everywhere else b% is simply b/100: 200 * 10% = 20.
+func evaluateRightOperand(n *binaryNode, left *big.Rat) (*big.Rat, error) {
+	percent, isPercent := n.right.(*percentNode)
+	if !isPercent || (n.op != tokenPlus && n.op != tokenMinus) {
+		return evaluate(n.right)
+	}
+	fraction, err := evaluate(percent)
+	if err != nil {
+		return nil, err
+	}
+	return new(big.Rat).Mul(left, fraction), nil
 }
 
 // divide returns left / right. big.Rat panics on a zero divisor, so zero is
