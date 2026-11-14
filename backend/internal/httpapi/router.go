@@ -14,5 +14,6 @@ func NewRouter(logger *slog.Logger) http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc(routeHealth, handleHealth)
 	mux.HandleFunc(routeEvaluate, handleEvaluate(logger))
+	mux.HandleFunc(routeCalculate, handleCalculate(logger))
 	return withJSONFallback(mux)
 }

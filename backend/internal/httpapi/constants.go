@@ -2,8 +2,9 @@ package httpapi
 
 // Routes served by the API, in Go's "METHOD /path" pattern form.
 const (
-	routeHealth   = "GET /healthz"
-	routeEvaluate = "POST /api/v1/evaluate"
+	routeHealth    = "GET /healthz"
+	routeEvaluate  = "POST /api/v1/evaluate"
+	routeCalculate = "POST /api/v1/calculate"
 )
 
 // Header names and values.
@@ -36,6 +37,7 @@ const (
 	messageUnknownField         = "Unknown field %s"
 	messageWrongFieldType       = "Field %q has the wrong type"
 	messageMissingField         = "Field %q is required"
+	messageInvalidOperandType   = "Operand %d must be a string or a number"
 )
 
 // jsonUnknownFieldPrefix starts the error text encoding/json returns for a
@@ -45,6 +47,8 @@ const jsonUnknownFieldPrefix = "json: unknown field "
 // Request field names, as used in error messages.
 const (
 	fieldExpression = "expression"
+	fieldOperation  = "operation"
+	fieldOperands   = "operands"
 )
 
 // Health check response values.
