@@ -21,6 +21,15 @@ func (n *numberNode) String() string {
 	return n.value.RatString()
 }
 
+// negateNode flips the sign of its operand, e.g. -5 or -(1 + 2).
+type negateNode struct {
+	operand node
+}
+
+func (n *negateNode) String() string {
+	return fmt.Sprintf("(-%s)", n.operand)
+}
+
 // binaryNode applies an operator to two operands, e.g. left + right.
 type binaryNode struct {
 	op    tokenKind

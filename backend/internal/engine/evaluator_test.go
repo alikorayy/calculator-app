@@ -35,6 +35,12 @@ func TestEvaluate_ExactArithmetic(t *testing.T) {
 		{"0.1 + 0.2 is exactly 0.3", "0.1+0.2", "3/10"},
 		{"0.7 + 0.1 is exactly 0.8", "0.7+0.1", "4/5"},
 		{"negative result", "2-5", "-3"},
+		{"negative number", "-5", "-5"},
+		{"multiplying by a negative number", "2*-3", "-6"},
+		{"subtracting a negative number", "10 - -3", "13"},
+		{"negated parentheses", "-(1+2)", "-3"},
+		{"double negation", "--5", "5"},
+		{"negative zero is zero", "-0", "0"},
 		{"zero divided by a number", "0/5", "0"},
 		{"numbers beyond 64 bits stay exact", "99999999999999999999*99999999999999999999", "9999999999999999999800000000000000000001"},
 	}
@@ -64,6 +70,7 @@ func TestEvaluate_DivisionErrors(t *testing.T) {
 		{"computed zero divided by zero", "(3-3)/(1-1)", CodeUndefinedResult},
 		{"error in the right operand stops evaluation", "1 + 2 * (4/0)", CodeDivisionByZero},
 		{"error in the left operand stops evaluation", "(4/0) + 1", CodeDivisionByZero},
+		{"error inside a negation stops evaluation", "-(1/0)", CodeDivisionByZero},
 	}
 
 	for _, tt := range tests {

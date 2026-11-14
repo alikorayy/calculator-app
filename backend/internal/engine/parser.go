@@ -9,12 +9,16 @@ import (
 // method, and a rule calls the rule of the next higher precedence level:
 //
 //	expression := term (('+' | '-') term)*
-//	term       := primary (('*' | '/') primary)*
+//	term       := unary (('*' | '/') unary)*
+//	unary      := ('-' | '+') unary | primary
 //	primary    := NUMBER | '(' expression ')'
 //
 // Because expression is built out of terms, '*' and '/' bind tighter than
 // '+' and '-'. The loops build the tree left to right, so operators of the same
 // precedence are left-associative: 10 - 4 - 3 = (10 - 4) - 3.
+//
+// A sign in front of an operand is unary and binds tighter than '*' and '/':
+// -2 * 3 = (-2) * 3. Signs can be repeated: --5 = 5.
 
 // parser holds the tokens of one expression and a cursor into them.
 type parser struct {
@@ -79,19 +83,38 @@ func (p *parser) parseExpression() (node, error) {
 
 // parseTerm handles '*' and '/', which bind tighter than '+' and '-'.
 func (p *parser) parseTerm() (node, error) {
-	left, err := p.parsePrimary()
+	left, err := p.parseUnary()
 	if err != nil {
 		return nil, err
 	}
 	for p.peek().kind == tokenMultiply || p.peek().kind == tokenDivide {
 		op := p.advance()
-		right, err := p.parsePrimary()
+		right, err := p.parseUnary()
 		if err != nil {
 			return nil, err
 		}
 		left = &binaryNode{op: op.kind, left: left, right: right}
 	}
 	return left, nil
+}
+
+// parseUnary handles a leading sign. '-' negates its operand; '+' changes
+// nothing and is dropped from the tree.
+func (p *parser) parseUnary() (node, error) {
+	switch p.peek().kind {
+	case tokenMinus:
+		p.advance()
+		operand, err := p.parseUnary()
+		if err != nil {
+			return nil, err
+		}
+		return &negateNode{operand: operand}, nil
+	case tokenPlus:
+		p.advance()
+		return p.parseUnary()
+	default:
+		return p.parsePrimary()
+	}
 }
 
 // parsePrimary handles a number or a parenthesized sub-expression.

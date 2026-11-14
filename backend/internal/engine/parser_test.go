@@ -23,6 +23,15 @@ func TestParse_BuildsTreeWithPrecedence(t *testing.T) {
 		{"parentheses override precedence", "(1+2)*3", "((1 + 2) * 3)"},
 		{"redundant parentheses disappear", "((2))", "2"},
 		{"nested parentheses", "2*(3+(4-1))", "(2 * (3 + (4 - 1)))"},
+		{"negative number", "-5", "(-5)"},
+		{"negative operand after an operator", "2*-3", "(2 * (-3))"},
+		{"unary minus binds tighter than multiplication", "-2*3", "((-2) * 3)"},
+		{"subtracting a negative number", "10 - -3", "(10 - (-3))"},
+		{"keypad minus sign", "1−−2", "(1 - (-2))"},
+		{"negated parentheses", "-(1+2)", "(-(1 + 2))"},
+		{"double negation", "--5", "(-(-5))"},
+		{"unary plus is dropped", "+5", "5"},
+		{"mixed signs", "-+-5", "(-(-5))"},
 	}
 
 	for _, tt := range tests {
@@ -54,6 +63,8 @@ func TestParse_SyntaxErrors(t *testing.T) {
 		{"unclosed parenthesis", "(1+2", "Missing closing parenthesis", 4},
 		{"extra closing parenthesis", "1+2)", `Unexpected ")"`, 3},
 		{"empty parentheses", "()", `Unexpected ")"`, 1},
+		{"sign without operand", "-", "Unexpected end of expression", 1},
+		{"sign before an operator", "2*-/3", `Unexpected "/"`, 3},
 		{"tokenizer error is passed through", "2&3", "Unexpected character '&'", 1},
 	}
 

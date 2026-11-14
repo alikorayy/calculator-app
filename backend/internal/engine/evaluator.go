@@ -15,6 +15,12 @@ func evaluate(n node) (*big.Rat, error) {
 	switch n := n.(type) {
 	case *numberNode:
 		return n.value, nil
+	case *negateNode:
+		operand, err := evaluate(n.operand)
+		if err != nil {
+			return nil, err
+		}
+		return new(big.Rat).Neg(operand), nil
 	case *binaryNode:
 		return evaluateBinary(n)
 	default:
