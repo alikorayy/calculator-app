@@ -1,0 +1,318 @@
+openapi: 3.1.0
+info:
+  title: Calculator API
+  version: 1.0.0
+  description: |
+    A stateless calculator service with exact arithmetic.
+
+    Numbers are computed as exact fractions and rounded only once, for display,
+    to 16 significant digits; very large or small results use scientific
+    notation ("1e+64"). Results are always JSON strings, so no precision is lost
+    in JavaScript clients. `approximate` is true when the result was rounded.
+
+    Every error response uses the same envelope:
+    `{"error": {"code": "...", "message": "...", "position": 4}}`, where
+    `position` (0-based character index) is present only for syntax errors.
+    Branch on `code`; `message` is meant for people.
+
+    Status codes: 400 for malformed requests, 422 for well-formed requests whose
+    math cannot be done, 413/415/429/503 for transport-level limits.
+
+    Every response carries an `X-Request-ID` header that identifies the request
+    in the server logs.
+servers:
+  - url: /
+    description: Same origin as the web app (nginx in Docker, the Vite proxy in development)
+
+paths:
+  /api/v1/evaluate:
+    post:
+      operationId: evaluate
+      summary: Evaluate a calculator expression
+      description: |
+        Supports `+ - * / ^ %`, the keypad symbols `× ÷ −`, parentheses, square
+        roots in function form (`√(9)` or `sqrt(9)`) and implicit multiplication
+        (`2(3+1)`). Standard precedence applies: `50 - 7 × 3 = 29`, `-2^2 = -4`,
+        `2^3^2 = 512`, `6/2(1+2) = 9`.
+
+        `%` follows calculator conventions: as the whole right operand of `+`
+        or `-` it is a percentage of the left operand (`50 + 10% = 55`);
+        everywhere else `b%` is `b/100` (`200 × 10% = 20`).
+
+        Limits: 256 characters, 32 significant digits per number, 32 nested
+        parentheses, results between 1e-10000 and 1e+10000.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EvaluateRequest"
+            examples:
+              precedence:
+                value: { expression: "50 - 7 × 3" }
+              percentage:
+                value: { expression: "50 + 10%" }
+              squareRoot:
+                value: { expression: "√(2) × 3" }
+      responses:
+        "200":
+          $ref: "#/components/responses/Calculated"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "413":
+          $ref: "#/components/responses/PayloadTooLarge"
+        "415":
+          $ref: "#/components/responses/UnsupportedMediaType"
+        "422":
+          $ref: "#/components/responses/CannotCalculate"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "503":
+          $ref: "#/components/responses/Timeout"
+
+  /api/v1/calculate:
+    post:
+      operationId: calculate
+      summary: Apply a single operation
+      description: |
+        A single-operation alternative to `/evaluate`, computed by the same
+        engine with the same rules. Binary operations take two operands; `sqrt`
+        and `percent` (a / 100) take one.
+
+        Operands are decimal numbers given as JSON strings (`"12.5"`) or JSON
+        numbers (`12.5`). Numbers are read as their exact text, never as
+        floating point, so `9007199254740993` stays exact. Exponent notation
+        (`1e5`) is not accepted.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CalculateRequest"
+            examples:
+              divide:
+                value: { operation: divide, operands: ["10", "4"] }
+              power:
+                value: { operation: power, operands: [2, 0.5] }
+              squareRoot:
+                value: { operation: sqrt, operands: ["9"] }
+      responses:
+        "200":
+          $ref: "#/components/responses/Calculated"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "413":
+          $ref: "#/components/responses/PayloadTooLarge"
+        "415":
+          $ref: "#/components/responses/UnsupportedMediaType"
+        "422":
+          $ref: "#/components/responses/CannotCalculate"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "503":
+          $ref: "#/components/responses/Timeout"
+
+  /healthz:
+    get:
+      operationId: health
+      summary: Liveness check
+      description: Returns 200 while the process can serve requests. Used by the container health check.
+      responses:
+        "200":
+          description: The service is up.
+          headers:
+            X-Request-ID:
+              $ref: "#/components/headers/RequestID"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+              example: { status: ok }
+
+components:
+  schemas:
+    EvaluateRequest:
+      type: object
+      additionalProperties: false
+      required: [expression]
+      properties:
+        expression:
+          type: string
+          maxLength: 256
+          description: The calculator expression.
+          examples: ["50 - 7 × 3"]
+
+    CalculateRequest:
+      type: object
+      additionalProperties: false
+      required: [operation, operands]
+      properties:
+        operation:
+          type: string
+          enum: [add, subtract, multiply, divide, power, sqrt, percent]
+        operands:
+          type: array
+          minItems: 1
+          maxItems: 2
+          items:
+            description: A decimal number such as "-12.5", as a string or a number.
+            oneOf:
+              - type: string
+                pattern: '^-?(\d+\.?\d*|\.\d+)$'
+              - type: number
+
+    CalculationResponse:
+      type: object
+      required: [result, approximate]
+      properties:
+        result:
+          type: string
+          description: The result rounded to 16 significant digits, e.g. "29", "0.3333333333333333" or "1e+64".
+          examples: ["29"]
+        approximate:
+          type: boolean
+          description: True when `result` was rounded, i.e. is not the exact value.
+
+    HealthResponse:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          const: ok
+
+    ErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code:
+              type: string
+              enum:
+                - INVALID_REQUEST
+                - UNSUPPORTED_MEDIA_TYPE
+                - PAYLOAD_TOO_LARGE
+                - SYNTAX_ERROR
+                - DIVISION_BY_ZERO
+                - UNDEFINED_RESULT
+                - DOMAIN_ERROR
+                - OVERFLOW
+                - LIMIT_EXCEEDED
+                - RATE_LIMITED
+                - NOT_FOUND
+                - METHOD_NOT_ALLOWED
+                - INTERNAL_ERROR
+                - TIMEOUT
+            message:
+              type: string
+              description: A short, human-readable description.
+            position:
+              type: integer
+              minimum: 0
+              description: For SYNTAX_ERROR, the 0-based character index of the problem.
+
+  headers:
+    RequestID:
+      description: Identifies the request in the server logs; quote it when reporting a problem.
+      schema:
+        type: string
+
+  responses:
+    Calculated:
+      description: The calculation succeeded.
+      headers:
+        X-Request-ID:
+          $ref: "#/components/headers/RequestID"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/CalculationResponse"
+          examples:
+            exact:
+              value: { result: "29", approximate: false }
+            rounded:
+              value: { result: "0.3333333333333333", approximate: true }
+
+    BadRequest:
+      description: The request is malformed (client bug), e.g. invalid JSON, unknown field, unknown operation.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          examples:
+            unknownField:
+              value: { error: { code: INVALID_REQUEST, message: 'Unknown field "expresion"' } }
+            unknownOperation:
+              value: { error: { code: INVALID_REQUEST, message: 'Unknown operation "modulo"' } }
+
+    CannotCalculate:
+      description: The request is well formed but the math cannot be done; show the message to the user.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          examples:
+            syntaxError:
+              value: { error: { code: SYNTAX_ERROR, message: 'Unexpected "*"', position: 4 } }
+            divisionByZero:
+              value: { error: { code: DIVISION_BY_ZERO, message: Cannot divide by zero } }
+            undefinedResult:
+              value: { error: { code: UNDEFINED_RESULT, message: Result is undefined } }
+            domainError:
+              value: { error: { code: DOMAIN_ERROR, message: Invalid input } }
+            overflow:
+              value: { error: { code: OVERFLOW, message: Result is out of range } }
+            limitExceeded:
+              value: { error: { code: LIMIT_EXCEEDED, message: Number has too many digits (maximum 32) } }
+
+    PayloadTooLarge:
+      description: The request body exceeds the size limit (4 KiB by default).
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example: { error: { code: PAYLOAD_TOO_LARGE, message: Request body is too large (maximum 4096 bytes) } }
+
+    UnsupportedMediaType:
+      description: The Content-Type is not application/json.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example: { error: { code: UNSUPPORTED_MEDIA_TYPE, message: Content-Type must be application/json } }
+
+    RateLimited:
+      description: The client sent too many requests; retry after the given number of seconds.
+      headers:
+        Retry-After:
+          description: Seconds to wait before retrying.
+          schema:
+            type: integer
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example: { error: { code: RATE_LIMITED, message: Too many requests, please slow down } }
+
+    InternalError:
+      description: An unexpected server error; details are only in the server log, under the X-Request-ID.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example: { error: { code: INTERNAL_ERROR, message: An unexpected error occurred } }
+
+    Timeout:
+      description: The request took longer than the request timeout (5 seconds by default).
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example: { error: { code: TIMEOUT, message: The request took too long to process } }
