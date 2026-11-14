@@ -1,0 +1,96 @@
+package config
+
+import (
+	"log/slog"
+	"testing"
+	"time"
+)
+
+// lookupFrom returns a LookupFunc backed by a map, so tests never touch the real environment.
+func lookupFrom(env map[string]string) LookupFunc {
+	return func(key string) (string, bool) {
+		v, ok := env[key]
+		return v, ok
+	}
+}
+
+func TestLoad_Defaults(t *testing.T) {
+	cfg, err := Load(lookupFrom(nil))
+	if err != nil {
+		t.Fatalf("Load() unexpected error: %v", err)
+	}
+
+	want := Config{
+		Port:            DefaultPort,
+		ReadTimeout:     DefaultReadTimeout,
+		WriteTimeout:    DefaultWriteTimeout,
+		IdleTimeout:     DefaultIdleTimeout,
+		ShutdownTimeout: DefaultShutdownTimeout,
+		LogLevel:        DefaultLogLevel,
+	}
+	if cfg != want {
+		t.Errorf("Load() = %+v, want %+v", cfg, want)
+	}
+}
+
+func TestLoad_Overrides(t *testing.T) {
+	env := map[string]string{
+		EnvPort:            "9090",
+		EnvReadTimeout:     "1s",
+		EnvWriteTimeout:    "2s",
+		EnvIdleTimeout:     "3m",
+		EnvShutdownTimeout: "500ms",
+		EnvLogLevel:        "debug",
+	}
+
+	cfg, err := Load(lookupFrom(env))
+	if err != nil {
+		t.Fatalf("Load() unexpected error: %v", err)
+	}
+
+	want := Config{
+		Port:            9090,
+		ReadTimeout:     time.Second,
+		WriteTimeout:    2 * time.Second,
+		IdleTimeout:     3 * time.Minute,
+		ShutdownTimeout: 500 * time.Millisecond,
+		LogLevel:        slog.LevelDebug,
+	}
+	if cfg != want {
+		t.Errorf("Load() = %+v, want %+v", cfg, want)
+	}
+}
+
+func TestLoad_InvalidValues(t *testing.T) {
+	tests := []struct {
+		name  string
+		key   string
+		value string
+	}{
+		{"port not a number", EnvPort, "abc"},
+		{"port zero", EnvPort, "0"},
+		{"port too large", EnvPort, "70000"},
+		{"port negative", EnvPort, "-1"},
+		{"read timeout not a duration", EnvReadTimeout, "fast"},
+		{"write timeout without unit", EnvWriteTimeout, "10"},
+		{"idle timeout zero", EnvIdleTimeout, "0s"},
+		{"shutdown timeout negative", EnvShutdownTimeout, "-5s"},
+		{"unknown log level", EnvLogLevel, "verbose"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := Load(lookupFrom(map[string]string{tt.key: tt.value}))
+			if err == nil {
+				t.Errorf("Load() with %s=%q: expected an error, got nil", tt.key, tt.value)
+			}
+		})
+	}
+}
+
+func TestConfig_Addr(t *testing.T) {
+	cfg := Config{Port: 8080}
+	if got, want := cfg.Addr(), ":8080"; got != want {
+		t.Errorf("Addr() = %q, want %q", got, want)
+	}
+}
