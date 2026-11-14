@@ -40,7 +40,7 @@ func run(cfg config.Config, logger *slog.Logger) error {
 
 	server := &http.Server{
 		Addr:         cfg.Addr(),
-		Handler:      httpapi.NewRouter(),
+		Handler:      httpapi.NewRouter(logger),
 		ReadTimeout:  cfg.ReadTimeout,
 		WriteTimeout: cfg.WriteTimeout,
 		IdleTimeout:  cfg.IdleTimeout,

@@ -37,7 +37,7 @@ func TestFallback_UnmatchedRequestsUseJSONEnvelope(t *testing.T) {
 			rec := httptest.NewRecorder()
 			req := httptest.NewRequest(tt.method, tt.path, nil)
 
-			NewRouter().ServeHTTP(rec, req)
+			newTestRouter().ServeHTTP(rec, req)
 
 			if rec.Code != tt.wantCode {
 				t.Errorf("status = %d, want %d", rec.Code, tt.wantCode)
@@ -60,7 +60,7 @@ func TestFallback_PassesThroughOtherStatuses(t *testing.T) {
 	// An unclean path makes the mux answer with a redirect, which must not be rewritten.
 	req := httptest.NewRequest(http.MethodGet, "//anything", nil)
 
-	NewRouter().ServeHTTP(rec, req)
+	newTestRouter().ServeHTTP(rec, req)
 
 	if rec.Code != http.StatusMovedPermanently {
 		t.Errorf("status = %d, want %d", rec.Code, http.StatusMovedPermanently)

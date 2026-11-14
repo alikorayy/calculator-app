@@ -10,11 +10,14 @@ type ErrorResponse struct {
 	Error ErrorBody `json:"error"`
 }
 
-// ErrorBody describes a single error: a stable machine-readable code and a
-// human-readable message.
+// ErrorBody describes a single error: a stable machine-readable code, a
+// human-readable message and, for syntax errors, the 0-based character position
+// in the expression. Position is a pointer because 0 is a valid position; it
+// is omitted from the JSON when there is none.
 type ErrorBody struct {
-	Code    string `json:"code"`
-	Message string `json:"message"`
+	Code     string `json:"code"`
+	Message  string `json:"message"`
+	Position *int   `json:"position,omitempty"`
 }
 
 // writeJSON encodes body as JSON and writes it with the given status code.
