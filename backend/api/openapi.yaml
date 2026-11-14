@@ -1,4 +1,4 @@
-openapi: 3.1.0
+openapi: 3.0.3
 info:
   title: Calculator API
   version: 1.0.0
@@ -144,7 +144,7 @@ components:
           type: string
           maxLength: 256
           description: The calculator expression.
-          examples: ["50 - 7 × 3"]
+          example: "50 - 7 × 3"
 
     CalculateRequest:
       type: object
@@ -172,7 +172,7 @@ components:
         result:
           type: string
           description: The result rounded to 16 significant digits, e.g. "29", "0.3333333333333333" or "1e+64".
-          examples: ["29"]
+          example: "29"
         approximate:
           type: boolean
           description: True when `result` was rounded, i.e. is not the exact value.
@@ -183,7 +183,7 @@ components:
       properties:
         status:
           type: string
-          const: ok
+          enum: [ok]
 
     ErrorResponse:
       type: object
@@ -262,15 +262,15 @@ components:
             syntaxError:
               value: { error: { code: SYNTAX_ERROR, message: 'Unexpected "*"', position: 4 } }
             divisionByZero:
-              value: { error: { code: DIVISION_BY_ZERO, message: Cannot divide by zero } }
+              value: { error: { code: DIVISION_BY_ZERO, message: "Cannot divide by zero" } }
             undefinedResult:
-              value: { error: { code: UNDEFINED_RESULT, message: Result is undefined } }
+              value: { error: { code: UNDEFINED_RESULT, message: "Result is undefined" } }
             domainError:
-              value: { error: { code: DOMAIN_ERROR, message: Invalid input } }
+              value: { error: { code: DOMAIN_ERROR, message: "Invalid input" } }
             overflow:
-              value: { error: { code: OVERFLOW, message: Result is out of range } }
+              value: { error: { code: OVERFLOW, message: "Result is out of range" } }
             limitExceeded:
-              value: { error: { code: LIMIT_EXCEEDED, message: Number has too many digits (maximum 32) } }
+              value: { error: { code: LIMIT_EXCEEDED, message: "Number has too many digits (maximum 32)" } }
 
     PayloadTooLarge:
       description: The request body exceeds the size limit (4 KiB by default).
@@ -278,7 +278,7 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/ErrorResponse"
-          example: { error: { code: PAYLOAD_TOO_LARGE, message: Request body is too large (maximum 4096 bytes) } }
+          example: { error: { code: PAYLOAD_TOO_LARGE, message: "Request body is too large (maximum 4096 bytes)" } }
 
     UnsupportedMediaType:
       description: The Content-Type is not application/json.
@@ -286,7 +286,7 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/ErrorResponse"
-          example: { error: { code: UNSUPPORTED_MEDIA_TYPE, message: Content-Type must be application/json } }
+          example: { error: { code: UNSUPPORTED_MEDIA_TYPE, message: "Content-Type must be application/json" } }
 
     RateLimited:
       description: The client sent too many requests; retry after the given number of seconds.
@@ -299,7 +299,7 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/ErrorResponse"
-          example: { error: { code: RATE_LIMITED, message: Too many requests, please slow down } }
+          example: { error: { code: RATE_LIMITED, message: "Too many requests, please slow down" } }
 
     InternalError:
       description: An unexpected server error; details are only in the server log, under the X-Request-ID.
@@ -307,7 +307,7 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/ErrorResponse"
-          example: { error: { code: INTERNAL_ERROR, message: An unexpected error occurred } }
+          example: { error: { code: INTERNAL_ERROR, message: "An unexpected error occurred" } }
 
     Timeout:
       description: The request took longer than the request timeout (5 seconds by default).
@@ -315,4 +315,4 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/ErrorResponse"
-          example: { error: { code: TIMEOUT, message: The request took too long to process } }
+          example: { error: { code: TIMEOUT, message: "The request took too long to process" } }
