@@ -32,6 +32,14 @@ func main() {
 		os.Exit(1)
 	}
 
+	if len(os.Args) > 1 && os.Args[1] == healthcheckCommand {
+		if err := checkHealth(healthcheckURL(cfg.Port)); err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
+		return
+	}
+
 	jsonHandler := slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: cfg.LogLevel})
 	logger := slog.New(middleware.NewRequestIDLogHandler(jsonHandler))
 

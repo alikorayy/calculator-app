@@ -1,8 +1,12 @@
 package httpapi
 
+// HealthPath is the path of the liveness check, also used by the container
+// health check in package main.
+const HealthPath = "/healthz"
+
 // Routes served by the API, in Go's "METHOD /path" pattern form.
 const (
-	routeHealth    = "GET /healthz"
+	routeHealth    = "GET " + HealthPath
 	routeEvaluate  = "POST /api/v1/evaluate"
 	routeCalculate = "POST /api/v1/calculate"
 )
