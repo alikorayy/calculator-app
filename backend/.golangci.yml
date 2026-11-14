@@ -1,0 +1,42 @@
+# golangci-lint v2 configuration. Run with: golangci-lint run ./...
+version: "2"
+
+run:
+  timeout: 5m
+
+linters:
+  # errcheck, govet, ineffassign, staticcheck, unused
+  default: standard
+  enable:
+    - bodyclose     # HTTP response bodies are closed
+    - errorlint     # errors are compared with errors.Is/As and wrapped with %w
+    - gocritic      # common style and correctness issues
+    - gosec         # security issues
+    - misspell      # spelling in comments and strings
+    - nolintlint    # //nolint directives are justified and still needed
+    - revive        # idiomatic Go, including doc comments on exported names
+    - unconvert     # unnecessary type conversions
+    - unparam       # unused function parameters and results
+    - usestdlibvars # http.MethodGet instead of "GET", etc.
+  settings:
+    misspell:
+      locale: US
+    gosec:
+      excludes:
+        # Integer conversions in this code base are bounded by the engine's and
+        # the config's input limits, so the generic overflow warning is noise.
+        - G115
+  exclusions:
+    presets:
+      - std-error-handling
+      - common-false-positives
+    rules:
+      # Tests build requests and servers on purpose in ways gosec would flag.
+      - path: _test\.go
+        linters:
+          - gosec
+
+formatters:
+  enable:
+    - gofmt
+    - goimports
