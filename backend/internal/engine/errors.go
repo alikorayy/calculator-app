@@ -20,6 +20,9 @@ const (
 	CodeOverflow Code = "OVERFLOW"
 	// CodeLimitExceeded means the input is too long, too deeply nested or has too many digits.
 	CodeLimitExceeded Code = "LIMIT_EXCEEDED"
+	// CodeInvalidArgument means Calculate was called with an unknown operation,
+	// the wrong number of operands or an operand that is not a number.
+	CodeInvalidArgument Code = "INVALID_ARGUMENT"
 )
 
 // NoPosition is the Position of an Error that does not point at a specific

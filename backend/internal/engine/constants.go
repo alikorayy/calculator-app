@@ -39,6 +39,15 @@ const (
 	msgExponentTooLarge    = "Exponent is too large"
 	msgInvalidInput        = "Invalid input"
 	msgExpectedParenAfter  = "Expected \"(\" after %q"
+	msgUnknownOperation    = "Unknown operation %q"
+	msgWrongOperandCount   = "Wrong number of operands for %q: expected %d, got %d"
+	msgInvalidOperand      = "Operand %d is not a valid number: %q"
+)
+
+// Number of operands taken by Calculate operations.
+const (
+	unaryArity  = 1
+	binaryArity = 2
 )
 
 // Precision settings for results that cannot be represented exactly.

@@ -86,14 +86,29 @@ func scanNumber(runes []rune, start int) (token, error) {
 	}
 
 	text := string(runes[start:end])
-	separators := strings.Count(text, string(decimalSeparator))
-	if separators > 1 || separators == len(text) {
+	if !isNumberLiteral(text) {
 		return token{}, newSyntaxError(start, fmt.Sprintf(msgInvalidNumber, text))
 	}
 	if significantDigits(text) > maxNumberDigits {
 		return token{}, newErrorAt(CodeLimitExceeded, start, fmt.Sprintf(msgTooManyDigits, maxNumberDigits))
 	}
 	return token{kind: tokenNumber, text: text, pos: start}, nil
+}
+
+// isNumberLiteral reports whether text consists only of digits and at most one
+// decimal separator, with at least one digit: "12", "12.5", ".5" and "5." are
+// number literals; "", ".", "1.2.3" and "-1" are not.
+func isNumberLiteral(text string) bool {
+	separators := 0
+	for _, r := range text {
+		switch {
+		case r == decimalSeparator:
+			separators++
+		case !isDigit(r):
+			return false
+		}
+	}
+	return separators <= 1 && len(text) > separators
 }
 
 // significantDigits counts the digits of a literal, ignoring the decimal
