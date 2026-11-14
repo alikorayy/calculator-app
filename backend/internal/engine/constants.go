@@ -56,6 +56,18 @@ const (
 	rootGuardBits = 64
 )
 
+// Output formatting.
+const (
+	// displayDigits is the number of significant digits shown, as on the
+	// Windows calculator.
+	displayDigits = 16
+	// Results whose decimal exponent is at least scientificUpperExponent or at
+	// most scientificLowerExponent are shown in scientific notation:
+	// 1e+16 and 1e-7, while 1000000000000000 and 0.000001 stay plain.
+	scientificUpperExponent = 16
+	scientificLowerExponent = -7
+)
+
 // percentBase is the divisor that turns a percentage into a fraction: 10% = 10/100.
 const percentBase = 100
 

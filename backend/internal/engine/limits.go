@@ -24,10 +24,8 @@ func checkRange(r *big.Rat) error {
 		return newError(CodeOverflow, msgOutOfRange)
 	}
 
-	upper := new(big.Rat).SetInt(new(big.Int).Exp(big.NewInt(10), big.NewInt(maxResultExponent), nil))
-	lower := new(big.Rat).Inv(upper)
 	abs := new(big.Rat).Abs(r)
-	if abs.Cmp(upper) > 0 || abs.Cmp(lower) < 0 {
+	if abs.Cmp(powerOfTen(maxResultExponent)) > 0 || abs.Cmp(powerOfTen(-maxResultExponent)) < 0 {
 		return newError(CodeOverflow, msgOutOfRange)
 	}
 	return nil
