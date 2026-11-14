@@ -1,0 +1,25 @@
+# Go build output and test artifacts
+backend/bin/
+*.exe
+*.test
+coverage.out
+coverage.html
+
+# Frontend dependencies and build output
+node_modules/
+dist/
+coverage/
+
+# Local environment files (may contain secrets)
+.env
+.env.*
+!.env.example
+
+# Personal Claude Code notes
+CLAUDE.local.md
+
+# OS and editor files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
