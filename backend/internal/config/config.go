@@ -15,7 +15,10 @@ type Config struct {
 	WriteTimeout    time.Duration
 	IdleTimeout     time.Duration
 	ShutdownTimeout time.Duration
-	LogLevel        slog.Level
+	// RequestTimeout is how long a handler may run before the request is
+	// answered with 503. It is always shorter than WriteTimeout.
+	RequestTimeout time.Duration
+	LogLevel       slog.Level
 	// MaxBodyBytes is the largest request body accepted, in bytes.
 	MaxBodyBytes int64
 }
@@ -34,6 +37,7 @@ func Load(lookup LookupFunc) (Config, error) {
 		WriteTimeout:    DefaultWriteTimeout,
 		IdleTimeout:     DefaultIdleTimeout,
 		ShutdownTimeout: DefaultShutdownTimeout,
+		RequestTimeout:  DefaultRequestTimeout,
 		LogLevel:        DefaultLogLevel,
 		MaxBodyBytes:    DefaultMaxBodyBytes,
 	}
@@ -50,6 +54,7 @@ func Load(lookup LookupFunc) (Config, error) {
 		{EnvWriteTimeout, &cfg.WriteTimeout},
 		{EnvIdleTimeout, &cfg.IdleTimeout},
 		{EnvShutdownTimeout, &cfg.ShutdownTimeout},
+		{EnvRequestTimeout, &cfg.RequestTimeout},
 	}
 	for _, d := range durations {
 		if err := loadDuration(lookup, d.key, d.target); err != nil {
@@ -62,6 +67,13 @@ func Load(lookup LookupFunc) (Config, error) {
 	}
 	if err := loadPositiveInt(lookup, EnvMaxBodyBytes, &cfg.MaxBodyBytes); err != nil {
 		return Config{}, err
+	}
+
+	// The server stops writing after WriteTimeout, so a request timeout that is
+	// not shorter could never deliver its 503 response.
+	if cfg.RequestTimeout >= cfg.WriteTimeout {
+		return Config{}, fmt.Errorf("config: %s (%s) must be shorter than %s (%s)",
+			EnvRequestTimeout, cfg.RequestTimeout, EnvWriteTimeout, cfg.WriteTimeout)
 	}
 
 	return cfg, nil

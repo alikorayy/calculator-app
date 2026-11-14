@@ -26,6 +26,7 @@ func TestLoad_Defaults(t *testing.T) {
 		WriteTimeout:    DefaultWriteTimeout,
 		IdleTimeout:     DefaultIdleTimeout,
 		ShutdownTimeout: DefaultShutdownTimeout,
+		RequestTimeout:  DefaultRequestTimeout,
 		LogLevel:        DefaultLogLevel,
 		MaxBodyBytes:    DefaultMaxBodyBytes,
 	}
@@ -41,6 +42,7 @@ func TestLoad_Overrides(t *testing.T) {
 		EnvWriteTimeout:    "2s",
 		EnvIdleTimeout:     "3m",
 		EnvShutdownTimeout: "500ms",
+		EnvRequestTimeout:  "1500ms",
 		EnvLogLevel:        "debug",
 		EnvMaxBodyBytes:    "1024",
 	}
@@ -56,6 +58,7 @@ func TestLoad_Overrides(t *testing.T) {
 		WriteTimeout:    2 * time.Second,
 		IdleTimeout:     3 * time.Minute,
 		ShutdownTimeout: 500 * time.Millisecond,
+		RequestTimeout:  1500 * time.Millisecond,
 		LogLevel:        slog.LevelDebug,
 		MaxBodyBytes:    1024,
 	}
@@ -78,6 +81,7 @@ func TestLoad_InvalidValues(t *testing.T) {
 		{"write timeout without unit", EnvWriteTimeout, "10"},
 		{"idle timeout zero", EnvIdleTimeout, "0s"},
 		{"shutdown timeout negative", EnvShutdownTimeout, "-5s"},
+		{"request timeout not a duration", EnvRequestTimeout, "soon"},
 		{"unknown log level", EnvLogLevel, "verbose"},
 		{"body limit not a number", EnvMaxBodyBytes, "4KB"},
 		{"body limit zero", EnvMaxBodyBytes, "0"},
@@ -98,5 +102,26 @@ func TestConfig_Addr(t *testing.T) {
 	cfg := Config{Port: 8080}
 	if got, want := cfg.Addr(), ":8080"; got != want {
 		t.Errorf("Addr() = %q, want %q", got, want)
+	}
+}
+
+func TestLoad_RequestTimeoutMustBeShorterThanWriteTimeout(t *testing.T) {
+	tests := []struct {
+		name           string
+		requestTimeout string
+		writeTimeout   string
+	}{
+		{"equal", "10s", "10s"},
+		{"longer", "15s", "10s"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			env := map[string]string{EnvRequestTimeout: tt.requestTimeout, EnvWriteTimeout: tt.writeTimeout}
+			if _, err := Load(lookupFrom(env)); err == nil {
+				t.Errorf("Load() with %s=%s and %s=%s: expected an error, got nil",
+					EnvRequestTimeout, tt.requestTimeout, EnvWriteTimeout, tt.writeTimeout)
+			}
+		})
 	}
 }

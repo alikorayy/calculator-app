@@ -12,6 +12,7 @@ const (
 	EnvWriteTimeout    = "WRITE_TIMEOUT"
 	EnvIdleTimeout     = "IDLE_TIMEOUT"
 	EnvShutdownTimeout = "SHUTDOWN_TIMEOUT"
+	EnvRequestTimeout  = "REQUEST_TIMEOUT"
 	EnvLogLevel        = "LOG_LEVEL"
 	EnvMaxBodyBytes    = "MAX_BODY_BYTES"
 )
@@ -23,6 +24,7 @@ const (
 	DefaultWriteTimeout    = 10 * time.Second
 	DefaultIdleTimeout     = 60 * time.Second
 	DefaultShutdownTimeout = 10 * time.Second
+	DefaultRequestTimeout  = 5 * time.Second
 	DefaultLogLevel        = slog.LevelInfo
 	// DefaultMaxBodyBytes (4 KiB) is far above the largest valid request: an
 	// expression is at most 256 characters.

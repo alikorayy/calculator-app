@@ -52,4 +52,7 @@ const (
 
 	codePayloadTooLarge    = "PAYLOAD_TOO_LARGE"
 	messagePayloadTooLarge = "Request body is too large (maximum %d bytes)"
+
+	codeTimeout    = "TIMEOUT"
+	messageTimeout = "The request took too long to process"
 )
