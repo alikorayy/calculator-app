@@ -4,6 +4,7 @@ import (
 	"context"
 	"log/slog"
 	"net/http"
+	"slices"
 	"time"
 )
 
@@ -11,9 +12,13 @@ import (
 // once it has been handled: method, path, status, response size and duration.
 // Server errors (5xx) are logged at ERROR level, everything else at INFO.
 //
+// Successful requests to quietPaths are logged at DEBUG instead. This is meant
+// for health checks, which an orchestrator calls every few seconds: they would
+// otherwise flood the log, yet a failing health check stays visible.
+//
 // It must run inside RequestID so the line can carry the request ID; the ID is
 // added by the handler created with NewRequestIDLogHandler.
-func Logging(logger *slog.Logger) func(http.Handler) http.Handler {
+func Logging(logger *slog.Logger, quietPaths ...string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			start := time.Now()
@@ -21,10 +26,7 @@ func Logging(logger *slog.Logger) func(http.Handler) http.Handler {
 
 			next.ServeHTTP(recorder, r)
 
-			level := slog.LevelInfo
-			if recorder.status >= http.StatusInternalServerError {
-				level = slog.LevelError
-			}
+			level := requestLogLevel(recorder.status, slices.Contains(quietPaths, r.URL.Path))
 			logger.LogAttrs(r.Context(), level, logMessageRequest,
 				slog.String(logKeyMethod, r.Method),
 				slog.String(logKeyPath, r.URL.Path),
@@ -33,6 +35,19 @@ func Logging(logger *slog.Logger) func(http.Handler) http.Handler {
 				slog.Float64(logKeyDurationMS, float64(time.Since(start))/float64(time.Millisecond)),
 			)
 		})
+	}
+}
+
+// requestLogLevel chooses the level of a request's log line from its status
+// and whether its path is quiet.
+func requestLogLevel(status int, quiet bool) slog.Level {
+	switch {
+	case status >= http.StatusInternalServerError:
+		return slog.LevelError
+	case quiet && status < http.StatusBadRequest:
+		return slog.LevelDebug
+	default:
+		return slog.LevelInfo
 	}
 }
 

@@ -104,7 +104,8 @@ func newRateLimiter(cfg config.Config) *middleware.RateLimiter {
 //
 //   - RequestID first, so every later layer and every log line has the ID;
 //   - Logging next, so it records the final status of everything below it,
-//     including a 500 produced by Recover;
+//     including a 500 produced by Recover; successful health checks are
+//     logged at DEBUG so they do not flood the log;
 //   - Recover, so a panic anywhere below becomes a 500 instead of a dropped
 //     connection;
 //   - SecurityHeaders before any layer that can answer early, so 429, 413 and
@@ -114,7 +115,7 @@ func newRateLimiter(cfg config.Config) *middleware.RateLimiter {
 func newHandler(cfg config.Config, logger *slog.Logger, limiter *middleware.RateLimiter) http.Handler {
 	return middleware.Chain(httpapi.NewRouter(logger),
 		middleware.RequestID,
-		middleware.Logging(logger),
+		middleware.Logging(logger, httpapi.HealthPath),
 		middleware.Recover(logger, httpapi.WriteError),
 		middleware.SecurityHeaders,
 		limiter.Middleware(httpapi.WriteError),

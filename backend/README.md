@@ -92,7 +92,7 @@ at startup with a clear message.
 | Variable           | Default | Meaning |
 |--------------------|---------|---------|
 | `PORT`             | `8080`  | TCP port to listen on |
-| `LOG_LEVEL`        | `info`  | `debug`, `info`, `warn` or `error` |
+| `LOG_LEVEL`        | `info`  | `debug`, `info`, `warn` or `error`; successful health checks are only logged at `debug` |
 | `READ_TIMEOUT`     | `5s`    | Time to read a whole request |
 | `WRITE_TIMEOUT`    | `10s`   | Time to write a response |
 | `IDLE_TIMEOUT`     | `60s`   | Keep-alive time of an idle connection |

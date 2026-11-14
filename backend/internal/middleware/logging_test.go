@@ -103,6 +103,50 @@ func TestLogging_ServerErrorsAreLoggedAtErrorLevel(t *testing.T) {
 	}
 }
 
+func TestLogging_SuccessfulRequestsToQuietPathsAreDebugOnly(t *testing.T) {
+	const quietPath = "/healthz"
+	tests := []struct {
+		name      string
+		path      string
+		status    int
+		wantLevel string
+	}{
+		{"successful health check", quietPath, http.StatusOK, "DEBUG"},
+		{"failing health check stays visible", quietPath, http.StatusServiceUnavailable, "ERROR"},
+		{"rejected health check stays visible", quietPath, http.StatusTooManyRequests, "INFO"},
+		{"other paths are unaffected", "/api/v1/evaluate", http.StatusOK, "INFO"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var buf bytes.Buffer
+			debugLogger := slog.New(slog.NewJSONHandler(&buf, &slog.HandlerOptions{Level: slog.LevelDebug}))
+			handler := Logging(debugLogger, quietPath)(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+				w.WriteHeader(tt.status)
+			}))
+
+			handler.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest(http.MethodGet, tt.path, nil))
+
+			if got := decodeLogLines(t, &buf)[0]["level"]; got != tt.wantLevel {
+				t.Errorf("level = %v, want %s", got, tt.wantLevel)
+			}
+		})
+	}
+}
+
+func TestLogging_QuietPathsAreHiddenAtTheDefaultLevel(t *testing.T) {
+	var buf bytes.Buffer
+	handler := Logging(newBufferLogger(&buf), "/healthz")(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+
+	handler.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest(http.MethodGet, "/healthz", nil))
+
+	if buf.Len() != 0 {
+		t.Errorf("successful health check was logged at INFO level: %s", buf.String())
+	}
+}
+
 func TestLogging_HandlerLogsShareTheRequestID(t *testing.T) {
 	var buf bytes.Buffer
 	logger := newBufferLogger(&buf)
