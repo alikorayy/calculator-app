@@ -28,6 +28,22 @@ const (
 	logKeyStack     = "stack"
 )
 
+// Security headers set on every response. The API only returns JSON, so it
+// needs no scripts, styles, frames or other resources at all.
+const (
+	headerContentTypeOptions = "X-Content-Type-Options"
+	valueNoSniff             = "nosniff"
+
+	headerContentSecurityPolicy = "Content-Security-Policy"
+	valueContentSecurityPolicy  = "default-src 'none'; frame-ancestors 'none'"
+
+	headerReferrerPolicy = "Referrer-Policy"
+	valueNoReferrer      = "no-referrer"
+
+	headerCrossOriginResourcePolicy = "Cross-Origin-Resource-Policy"
+	valueSameOrigin                 = "same-origin"
+)
+
 // Error codes and messages of the responses written by this package. They
 // match the codes of the API's error envelope.
 const (
