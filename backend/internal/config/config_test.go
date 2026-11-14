@@ -2,6 +2,8 @@ package config
 
 import (
 	"log/slog"
+	"net/netip"
+	"reflect"
 	"testing"
 	"time"
 )
@@ -21,30 +23,35 @@ func TestLoad_Defaults(t *testing.T) {
 	}
 
 	want := Config{
-		Port:            DefaultPort,
-		ReadTimeout:     DefaultReadTimeout,
-		WriteTimeout:    DefaultWriteTimeout,
-		IdleTimeout:     DefaultIdleTimeout,
-		ShutdownTimeout: DefaultShutdownTimeout,
-		RequestTimeout:  DefaultRequestTimeout,
-		LogLevel:        DefaultLogLevel,
-		MaxBodyBytes:    DefaultMaxBodyBytes,
+		Port:               DefaultPort,
+		ReadTimeout:        DefaultReadTimeout,
+		WriteTimeout:       DefaultWriteTimeout,
+		IdleTimeout:        DefaultIdleTimeout,
+		ShutdownTimeout:    DefaultShutdownTimeout,
+		RequestTimeout:     DefaultRequestTimeout,
+		LogLevel:           DefaultLogLevel,
+		MaxBodyBytes:       DefaultMaxBodyBytes,
+		RateLimitPerSecond: DefaultRateLimitPerSecond,
+		RateLimitBurst:     DefaultRateLimitBurst,
 	}
-	if cfg != want {
+	if !reflect.DeepEqual(cfg, want) {
 		t.Errorf("Load() = %+v, want %+v", cfg, want)
 	}
 }
 
 func TestLoad_Overrides(t *testing.T) {
 	env := map[string]string{
-		EnvPort:            "9090",
-		EnvReadTimeout:     "1s",
-		EnvWriteTimeout:    "2s",
-		EnvIdleTimeout:     "3m",
-		EnvShutdownTimeout: "500ms",
-		EnvRequestTimeout:  "1500ms",
-		EnvLogLevel:        "debug",
-		EnvMaxBodyBytes:    "1024",
+		EnvPort:               "9090",
+		EnvReadTimeout:        "1s",
+		EnvWriteTimeout:       "2s",
+		EnvIdleTimeout:        "3m",
+		EnvShutdownTimeout:    "500ms",
+		EnvRequestTimeout:     "1500ms",
+		EnvLogLevel:           "debug",
+		EnvMaxBodyBytes:       "1024",
+		EnvRateLimitPerSecond: "5",
+		EnvRateLimitBurst:     "8",
+		EnvTrustedProxies:     " 172.16.0.0/12, 10.0.0.5 ,, ::1 ",
 	}
 
 	cfg, err := Load(lookupFrom(env))
@@ -53,16 +60,23 @@ func TestLoad_Overrides(t *testing.T) {
 	}
 
 	want := Config{
-		Port:            9090,
-		ReadTimeout:     time.Second,
-		WriteTimeout:    2 * time.Second,
-		IdleTimeout:     3 * time.Minute,
-		ShutdownTimeout: 500 * time.Millisecond,
-		RequestTimeout:  1500 * time.Millisecond,
-		LogLevel:        slog.LevelDebug,
-		MaxBodyBytes:    1024,
+		Port:               9090,
+		ReadTimeout:        time.Second,
+		WriteTimeout:       2 * time.Second,
+		IdleTimeout:        3 * time.Minute,
+		ShutdownTimeout:    500 * time.Millisecond,
+		RequestTimeout:     1500 * time.Millisecond,
+		LogLevel:           slog.LevelDebug,
+		MaxBodyBytes:       1024,
+		RateLimitPerSecond: 5,
+		RateLimitBurst:     8,
+		TrustedProxies: []netip.Prefix{
+			netip.MustParsePrefix("172.16.0.0/12"),
+			netip.MustParsePrefix("10.0.0.5/32"),
+			netip.MustParsePrefix("::1/128"),
+		},
 	}
-	if cfg != want {
+	if !reflect.DeepEqual(cfg, want) {
 		t.Errorf("Load() = %+v, want %+v", cfg, want)
 	}
 }
@@ -86,6 +100,10 @@ func TestLoad_InvalidValues(t *testing.T) {
 		{"body limit not a number", EnvMaxBodyBytes, "4KB"},
 		{"body limit zero", EnvMaxBodyBytes, "0"},
 		{"body limit negative", EnvMaxBodyBytes, "-1"},
+		{"rate not a number", EnvRateLimitPerSecond, "fast"},
+		{"burst zero", EnvRateLimitBurst, "0"},
+		{"trusted proxy not an address", EnvTrustedProxies, "nginx"},
+		{"trusted proxy with a bad prefix length", EnvTrustedProxies, "10.0.0.0/33"},
 	}
 
 	for _, tt := range tests {
@@ -123,5 +141,16 @@ func TestLoad_RequestTimeoutMustBeShorterThanWriteTimeout(t *testing.T) {
 					EnvRequestTimeout, tt.requestTimeout, EnvWriteTimeout, tt.writeTimeout)
 			}
 		})
+	}
+}
+
+func TestLoad_TrustedProxyNetworksAreNormalized(t *testing.T) {
+	cfg, err := Load(lookupFrom(map[string]string{EnvTrustedProxies: "172.18.0.7/16"}))
+	if err != nil {
+		t.Fatalf("Load() unexpected error: %v", err)
+	}
+	want := []netip.Prefix{netip.MustParsePrefix("172.18.0.0/16")}
+	if !reflect.DeepEqual(cfg.TrustedProxies, want) {
+		t.Errorf("TrustedProxies = %v, want %v", cfg.TrustedProxies, want)
 	}
 }

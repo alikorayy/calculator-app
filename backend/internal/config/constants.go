@@ -7,14 +7,17 @@ import (
 
 // Environment variable names read by Load.
 const (
-	EnvPort            = "PORT"
-	EnvReadTimeout     = "READ_TIMEOUT"
-	EnvWriteTimeout    = "WRITE_TIMEOUT"
-	EnvIdleTimeout     = "IDLE_TIMEOUT"
-	EnvShutdownTimeout = "SHUTDOWN_TIMEOUT"
-	EnvRequestTimeout  = "REQUEST_TIMEOUT"
-	EnvLogLevel        = "LOG_LEVEL"
-	EnvMaxBodyBytes    = "MAX_BODY_BYTES"
+	EnvPort               = "PORT"
+	EnvReadTimeout        = "READ_TIMEOUT"
+	EnvWriteTimeout       = "WRITE_TIMEOUT"
+	EnvIdleTimeout        = "IDLE_TIMEOUT"
+	EnvShutdownTimeout    = "SHUTDOWN_TIMEOUT"
+	EnvRequestTimeout     = "REQUEST_TIMEOUT"
+	EnvLogLevel           = "LOG_LEVEL"
+	EnvMaxBodyBytes       = "MAX_BODY_BYTES"
+	EnvRateLimitPerSecond = "RATE_LIMIT_RPS"
+	EnvRateLimitBurst     = "RATE_LIMIT_BURST"
+	EnvTrustedProxies     = "TRUSTED_PROXIES"
 )
 
 // Default values used when an environment variable is not set.
@@ -29,7 +32,14 @@ const (
 	// DefaultMaxBodyBytes (4 KiB) is far above the largest valid request: an
 	// expression is at most 256 characters.
 	DefaultMaxBodyBytes = 4 << 10
+	// A person using the calculator sends one request per "=", so these
+	// limits only ever slow down scripts.
+	DefaultRateLimitPerSecond = 10
+	DefaultRateLimitBurst     = 20
 )
+
+// trustedProxySeparator separates the entries of TRUSTED_PROXIES.
+const trustedProxySeparator = ","
 
 // Valid TCP port range.
 const (

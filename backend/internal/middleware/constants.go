@@ -55,4 +55,15 @@ const (
 
 	codeTimeout    = "TIMEOUT"
 	messageTimeout = "The request took too long to process"
+
+	codeRateLimited    = "RATE_LIMITED"
+	messageRateLimited = "Too many requests, please slow down"
+)
+
+// Rate limiting.
+const (
+	headerForwardedFor = "X-Forwarded-For"
+	headerRetryAfter   = "Retry-After"
+	// ipv6ClientPrefixBits is the size of the IPv6 network treated as one client.
+	ipv6ClientPrefixBits = 64
 )
