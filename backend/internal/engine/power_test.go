@@ -2,6 +2,7 @@ package engine
 
 import (
 	"errors"
+	"math/big"
 	"strings"
 	"testing"
 )
@@ -28,6 +29,17 @@ func TestPower_ExactResults(t *testing.T) {
 		{"one to a huge power", "1^" + strings.Repeat("9", maxNumberDigits), "1"},
 		{"minus one to a huge odd power", "(-1)^" + strings.Repeat("9", maxNumberDigits), "-1"},
 		{"minus one to a huge even power", "(-1)^" + strings.Repeat("9", maxNumberDigits-1) + "8", "1"},
+
+		// Fractional exponents are exact when the base is a perfect power.
+		{"square root as a power", "4^0.5", "2"},
+		{"cube root", "8^(1/3)", "2"},
+		{"fourth root", "16^0.25", "2"},
+		{"root and power combined", "27^(2/3)", "9"},
+		{"fraction base", "(9/4)^0.5", "3/2"},
+		{"negative fractional exponent", "4^-0.5", "1/2"},
+		{"zero to a fractional power", "0^0.5", "0"},
+		{"one to a fractional power", "1^0.3", "1"},
+		{"huge perfect square", "(10^10000)^0.5", "1" + strings.Repeat("0", 5000)},
 	}
 
 	for _, tt := range tests {
@@ -40,6 +52,38 @@ func TestPower_ExactResults(t *testing.T) {
 				t.Errorf("evaluate(%q) = %s, want %s", tt.expr, got, tt.want)
 			}
 		})
+	}
+}
+
+func TestPower_IrrationalResultsAreAccurate(t *testing.T) {
+	tests := []struct {
+		name     string
+		expr     string
+		decimals int
+		want     string
+	}{
+		{"power form of the square root of 2", "2^0.5", 70, sqrt2Digits},
+		{"perfect-power numerator, non-power denominator", "(1/2)^0.5", 30, "0.707106781186547524400844362105"},
+		// The Gelfond–Schneider constant 2^√2, an irrational power of an irrational exponent.
+		{"irrational exponent", "2^√(2)", 30, "2.665144142690225188650297249873"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := mustEvaluate(t, tt.expr).FloatString(tt.decimals); got != tt.want {
+				t.Errorf("%s = %s\n     want %s", tt.expr, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestPower_IrrationalRootCubedIsWithinTolerance(t *testing.T) {
+	got := mustEvaluate(t, "(2^(1/3))^3")
+
+	diff := new(big.Rat).Sub(got, big.NewRat(2, 1))
+	tolerance := new(big.Rat).SetFrac(big.NewInt(1), new(big.Int).Exp(big.NewInt(10), big.NewInt(70), nil))
+	if diff.Abs(diff).Cmp(tolerance) > 0 {
+		t.Errorf("(2^(1/3))^3 - 2 = %s, want |difference| < 1e-70", diff.FloatString(80))
 	}
 }
 
@@ -65,7 +109,11 @@ func TestPower_Errors(t *testing.T) {
 		{"huge exponent", "2^" + strings.Repeat("9", maxNumberDigits), CodeOverflow},
 		{"tower of powers", "9^9^9", CodeOverflow},
 		{"in range but too many digits to compute exactly", "1.0000000000000000000000000000001^1000", CodeLimitExceeded},
-		{"fractional exponent", "4^0.5", CodeDomainError},
+		{"negative base with a fractional exponent", "(-8)^(1/3)", CodeDomainError},
+		{"minus one with a fractional exponent", "(-1)^0.5", CodeDomainError},
+		{"zero to a negative fractional power", "0^-0.5", CodeDivisionByZero},
+		{"fractional power too large", "10^10001.5", CodeOverflow},
+		{"fractional power too small", "10^-10001.5", CodeOverflow},
 		{"error in the base", "(1/0)^2", CodeDivisionByZero},
 		{"error in the exponent", "2^(1/0)", CodeDivisionByZero},
 	}

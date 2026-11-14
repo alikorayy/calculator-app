@@ -6,7 +6,7 @@ import "math/big"
 //
 // When x is a perfect square of a fraction (9, 0.25, 9/4) the root is exact.
 // Otherwise the root is irrational and has no exact fraction, so it is computed
-// with big.Float at sqrtPrecision bits (about 77 significant digits) and turned
+// with big.Float at irrationalPrecision bits (about 77 significant digits) and turned
 // back into a *big.Rat. That fraction is extremely close to the true root, and
 // all later arithmetic on it is exact again; the error stays far below the 16
 // digits that are displayed.
@@ -45,7 +45,7 @@ func integerSquareRoot(n *big.Int) (*big.Int, bool) {
 
 // approximateSquareRoot computes √x in big.Float and converts it back to a fraction.
 func approximateSquareRoot(x *big.Rat) *big.Rat {
-	f := new(big.Float).SetPrec(sqrtPrecision).SetRat(x)
+	f := new(big.Float).SetPrec(irrationalPrecision).SetRat(x)
 	f.Sqrt(f)
 	root, _ := f.Rat(nil)
 	return root

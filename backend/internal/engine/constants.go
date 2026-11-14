@@ -37,15 +37,24 @@ const (
 	msgUndefinedResult     = "Result is undefined"
 	msgOutOfRange          = "Result is out of range"
 	msgExponentTooLarge    = "Exponent is too large"
-	msgFractionalExponent  = "Fractional exponents are not supported yet"
 	msgInvalidInput        = "Invalid input"
 	msgExpectedParenAfter  = "Expected \"(\" after %q"
 )
 
-// sqrtPrecision is the big.Float precision, in bits, used for irrational
-// square roots. 256 bits is about 77 significant decimal digits, far more than
-// the 16 digits that are displayed.
-const sqrtPrecision = 256
+// Precision settings for results that cannot be represented exactly.
+const (
+	// irrationalPrecision is the big.Float precision, in bits, used for
+	// irrational square roots and powers. 256 bits is about 77 significant
+	// decimal digits, far more than the 16 digits that are displayed.
+	irrationalPrecision = 256
+	// maxExactRootDegree is the largest root degree q for which base^(p/q) is
+	// checked for an exact result. It covers the exponents people actually type,
+	// such as 0.5 (q = 2), 1/3 (q = 3) or 0.25 (q = 4).
+	maxExactRootDegree = 64
+	// rootGuardBits is the extra big.Float precision used when estimating an
+	// integer root, so the estimate is off by at most one.
+	rootGuardBits = 64
+)
 
 // percentBase is the divisor that turns a percentage into a fraction: 10% = 10/100.
 const percentBase = 100

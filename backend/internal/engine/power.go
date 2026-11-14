@@ -3,37 +3,36 @@ package engine
 import (
 	"math"
 	"math/big"
+
+	"github.com/ALTree/bigfloat"
 )
 
-// power returns base^exponent exactly for an integer exponent.
+// power returns base^exponent.
 //
-// Special cases follow common calculator behaviour: 0^0 = 1, 0^n = 0 for n > 0,
-// and 0^n for n < 0 is a division by zero. Bases 1 and -1 are answered without
-// computing, so even a huge exponent is fine. For every other base the size of
-// the result is estimated first, and the power is refused before any expensive
-// work if it would be out of range (OVERFLOW) or too large to compute exactly
-// (LIMIT_EXCEEDED).
+// Integer exponents are computed exactly. A fractional exponent p/q is also
+// exact when the base is a perfect q-th power (4^0.5 = 2, 27^(2/3) = 9);
+// otherwise the result is irrational and is computed with big.Float at
+// irrationalPrecision, like an irrational square root.
+//
+// Special cases follow common calculator behaviour: 0^0 = 1, 0^x = 0 for x > 0,
+// 0^x for x < 0 is a division by zero, and a negative base with a fractional
+// exponent ((-8)^0.5) has no real result and is a DOMAIN_ERROR. Before any
+// expensive work the size of the result is estimated, and powers that would be
+// out of range (OVERFLOW) or too large to compute exactly (LIMIT_EXCEEDED) are
+// refused.
 func power(base, exponent *big.Rat) (*big.Rat, error) {
-	if !exponent.IsInt() {
-		return nil, newError(CodeDomainError, msgFractionalExponent)
-	}
-	n := exponent.Num()
-
 	switch {
 	case base.Sign() == 0:
-		return powerOfZero(n)
-	case isPlusOrMinusOne(base):
-		return powerOfPlusOrMinusOne(base, n), nil
+		return powerOfZero(exponent)
+	case exponent.IsInt():
+		return integerPower(base, exponent.Num())
+	default:
+		return fractionalPower(base, exponent)
 	}
-
-	if err := checkPowerSize(base, n); err != nil {
-		return nil, err
-	}
-	return exactPower(base, n), nil
 }
 
-func powerOfZero(n *big.Int) (*big.Rat, error) {
-	switch n.Sign() {
+func powerOfZero(exponent *big.Rat) (*big.Rat, error) {
+	switch exponent.Sign() {
 	case 0:
 		return big.NewRat(1, 1), nil
 	case 1:
@@ -41,6 +40,36 @@ func powerOfZero(n *big.Int) (*big.Rat, error) {
 	default:
 		return nil, newError(CodeDivisionByZero, msgDivisionByZero)
 	}
+}
+
+// integerPower returns base^n exactly. base must not be zero.
+func integerPower(base *big.Rat, n *big.Int) (*big.Rat, error) {
+	if isPlusOrMinusOne(base) {
+		return powerOfPlusOrMinusOne(base, n), nil
+	}
+	exponent := new(big.Rat).SetInt(n)
+	if err := checkPowerMagnitude(base, exponent); err != nil {
+		return nil, err
+	}
+	if err := checkExactPowerSize(base, n); err != nil {
+		return nil, err
+	}
+	return exactPower(base, n), nil
+}
+
+// fractionalPower returns base^exponent for a non-integer exponent. base must
+// not be zero.
+func fractionalPower(base, exponent *big.Rat) (*big.Rat, error) {
+	if base.Sign() < 0 {
+		return nil, newError(CodeDomainError, msgInvalidInput)
+	}
+	if err := checkPowerMagnitude(base, exponent); err != nil {
+		return nil, err
+	}
+	if root, ok := exactRoot(base, exponent.Denom()); ok {
+		return integerPower(root, exponent.Num())
+	}
+	return approximatePower(base, exponent), nil
 }
 
 func isPlusOrMinusOne(r *big.Rat) bool {
@@ -55,34 +84,35 @@ func powerOfPlusOrMinusOne(base *big.Rat, n *big.Int) *big.Rat {
 	return big.NewRat(1, 1)
 }
 
-// checkPowerSize estimates base^n before computing it. float64 is used here
-// only to estimate sizes, never to compute a result.
-//
-// Two different limits apply:
-//   - magnitude: a result that is clearly outside 10^-maxResultExponent ..
-//     10^maxResultExponent is OVERFLOW; results close to the limit are
-//     computed and then decided exactly by checkRange;
-//   - exact size: numerator and denominator grow by a factor of n, so a base
-//     with many digits and a large exponent can be in range yet need millions
-//     of digits to represent exactly (e.g. 1.000…001^1000); that is LIMIT_EXCEEDED.
-func checkPowerSize(base *big.Rat, n *big.Int) error {
-	absN, _ := new(big.Float).SetInt(n).Float64()
-	absN = math.Abs(absN)
-
-	magnitude := absN * math.Abs(log10Abs(base.Num())-log10Abs(base.Denom()))
+// checkPowerMagnitude estimates |base^exponent| before computing it and
+// reports OVERFLOW when it is clearly outside 10^-maxResultExponent ..
+// 10^maxResultExponent. Results close to the limit are computed and then
+// decided exactly by checkRange. float64 is used here only to estimate sizes,
+// never to compute a result.
+func checkPowerMagnitude(base, exponent *big.Rat) error {
+	absExponent, _ := exponent.Float64()
+	magnitude := math.Abs(absExponent) * math.Abs(log10Abs(base.Num())-log10Abs(base.Denom()))
 	if magnitude > maxResultExponent+rangeCheckMargin {
 		return newError(CodeOverflow, msgOutOfRange)
 	}
+	return nil
+}
 
+// checkExactPowerSize reports LIMIT_EXCEEDED when base^n would need too many
+// bits to represent exactly. Numerator and denominator grow by a factor of n,
+// so a base with many digits and a large exponent can be in range yet need
+// millions of digits (e.g. 1.000…001^1000).
+func checkExactPowerSize(base *big.Rat, n *big.Int) error {
+	absN, _ := new(big.Float).SetInt(n).Float64()
 	widestPart := max(base.Num().BitLen(), base.Denom().BitLen())
-	if absN*float64(widestPart) > maxExactPowerBits {
+	if math.Abs(absN)*float64(widestPart) > maxExactPowerBits {
 		return newError(CodeLimitExceeded, msgExponentTooLarge)
 	}
 	return nil
 }
 
 // exactPower computes base^n with integer arithmetic on the numerator and
-// denominator. Callers must have checked the size with checkPowerSize.
+// denominator. Callers must have checked the size first.
 func exactPower(base *big.Rat, n *big.Int) *big.Rat {
 	absN := new(big.Int).Abs(n)
 	num := new(big.Int).Exp(base.Num(), absN, nil)
@@ -92,5 +122,49 @@ func exactPower(base *big.Rat, n *big.Int) *big.Rat {
 	if n.Sign() < 0 {
 		result.Inv(result)
 	}
+	return result
+}
+
+// exactRoot returns the degree-th root of a positive base when both its
+// numerator and denominator are perfect powers, e.g. the cube root of 8/27 is
+// 2/3. Degrees above maxExactRootDegree are not tried.
+func exactRoot(base *big.Rat, degree *big.Int) (*big.Rat, bool) {
+	if !degree.IsInt64() || degree.Int64() > maxExactRootDegree {
+		return nil, false
+	}
+	num, ok := integerRoot(base.Num(), degree.Int64())
+	if !ok {
+		return nil, false
+	}
+	den, ok := integerRoot(base.Denom(), degree.Int64())
+	if !ok {
+		return nil, false
+	}
+	return new(big.Rat).SetFrac(num, den), true
+}
+
+// integerRoot returns the degree-th root of a positive n and true when n is a
+// perfect power. The root is estimated in big.Float with enough precision to
+// be off by at most one, then verified exactly with integer arithmetic.
+func integerRoot(n *big.Int, degree int64) (*big.Int, bool) {
+	precision := uint(n.BitLen())/uint(degree) + rootGuardBits
+	x := new(big.Float).SetPrec(precision).SetInt(n)
+	reciprocal := new(big.Float).SetPrec(precision).Quo(big.NewFloat(1), new(big.Float).SetInt64(degree))
+
+	estimate, _ := bigfloat.Pow(x, reciprocal).Int(nil)
+	for _, candidate := range []*big.Int{estimate, new(big.Int).Add(estimate, big.NewInt(1))} {
+		if new(big.Int).Exp(candidate, big.NewInt(degree), nil).Cmp(n) == 0 {
+			return candidate, true
+		}
+	}
+	return nil, false
+}
+
+// approximatePower computes an irrational base^exponent in big.Float and
+// converts it back to a fraction. base must be positive.
+func approximatePower(base, exponent *big.Rat) *big.Rat {
+	x := new(big.Float).SetPrec(irrationalPrecision).SetRat(base)
+	y := new(big.Float).SetPrec(irrationalPrecision).SetRat(exponent)
+	result, _ := bigfloat.Pow(x, y).Rat(nil)
 	return result
 }
