@@ -1,5 +1,7 @@
 # Calculator
 
+[![CI](https://github.com/alikorayy/calculator-app/actions/workflows/ci.yml/badge.svg)](https://github.com/alikorayy/calculator-app/actions/workflows/ci.yml)
+
 A full-stack calculator: a React + TypeScript frontend and a Go microservice
 that evaluates whole expressions with exact arithmetic.
 
