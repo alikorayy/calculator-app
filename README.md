@@ -7,9 +7,14 @@ that evaluates whole expressions with exact arithmetic.
 
 ## Quick start
 
-```sh
-docker compose up --build        # then open http://localhost:3000
-```
+1. Start everything:
+
+   ```sh
+   docker compose up --build
+   ```
+
+2. When the build finishes and the containers are healthy, open
+   **<http://localhost:3000>** in your browser.
 
 **Optional `.env` file:** the app runs with default values out of the box. To
 change settings such as the port, log level or rate limits, copy
@@ -216,12 +221,16 @@ cd backend && go test -cover ./...
 cd frontend && npm run lint && npm run coverage
 ```
 
+CI runs all of this, plus a `docker compose` smoke test through nginx, on every
+push and pull request.
+
 ## Repository layout
 
 ```
 backend/            Go service: cmd/ (wiring), internal/ (engine, httpapi, middleware, config), api/openapi.yaml
 frontend/           React app: src/ (app, features/calculator, shared, mocks), nginx/ (container config)
 docs/diagrams/      Diagrams in plain text
+.github/workflows/  CI: backend, frontend and Docker checks on every push
 compose.yaml        Both services with one command; settings in .env.example
 PROMPTS.md          AI prompts behind the main decisions
 CLAUDE.md           Coding rules for AI assistants (plus backend/ and frontend/ ones)
