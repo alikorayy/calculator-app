@@ -224,6 +224,12 @@ cd frontend && npm run lint && npm run coverage
 CI runs all of this, plus a `docker compose` smoke test through nginx, on every
 push and pull request.
 
+**Coverage reports** are HTML pages and are not committed. Create them locally
+with `make cover` in `backend/` (writes `coverage.html`) and `npm run coverage`
+in `frontend/` (writes `coverage/index.html`). Every CI run also keeps both as
+downloadable artifacts (`backend-coverage`, `frontend-coverage`): open the run
+under **Actions** and scroll to **Artifacts**.
+
 ## Repository layout
 
 ```
