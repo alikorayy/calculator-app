@@ -1,0 +1,27 @@
+/*
+ * The two pads wrap instead of using a fixed breakpoint: each has a minimum
+ * width, and as soon as both no longer fit on one line the function pad moves
+ * above the basic pad.
+ */
+.pads {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.functionPad,
+.basicPad {
+  display: grid;
+  gap: var(--space-3);
+  align-content: start;
+}
+
+.functionPad {
+  flex: 3 1 var(--pad-min-width-function);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.basicPad {
+  flex: 4 1 var(--pad-min-width-basic);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}

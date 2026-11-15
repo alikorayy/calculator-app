@@ -1,3 +1,4 @@
+import type { HistoryEntry } from '../features/calculator/types';
 import type { CalculationResponse, ErrorResponse } from '../shared/api/types';
 
 /** Expressions the default mock handler knows, as the keypad builds them. */
@@ -30,6 +31,13 @@ export const ERRORS = {
   timeout: { error: { code: 'TIMEOUT', message: 'The request took too long to process' } },
   unknownCalculationCode: { error: { code: 'NEW_CODE', message: 'Something new' } },
 } satisfies Record<string, ErrorResponse>;
+
+/** A history with an exact, a rounded and a scientific result, newest first. */
+export const HISTORY_ENTRIES = [
+  { id: 'entry-3', expression: '10^20', result: '1e+20' },
+  { id: 'entry-2', expression: '1÷3', result: '0.3333333333333333' },
+  { id: 'entry-1', expression: '50−7×3', result: '29' },
+] as const satisfies readonly HistoryEntry[];
 
 /** Seconds sent in the Retry-After header of a 429 fixture. */
 export const RETRY_AFTER_SECONDS = 1;

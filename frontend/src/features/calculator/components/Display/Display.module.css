@@ -1,0 +1,76 @@
+.display {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-height: var(--display-min-height);
+  padding: var(--space-4) var(--space-6) var(--space-5) var(--space-4);
+  border: var(--border-width) solid var(--color-line);
+  border-radius: var(--radius-panel);
+  background: var(--color-panel);
+}
+
+.topRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.topLine {
+  margin: 0 0 0 auto;
+  min-width: 0;
+  padding-left: var(--space-4);
+  overflow: hidden;
+  color: var(--color-ink-muted);
+  font-size: var(--font-size-sm);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.topLine[data-error='true'] {
+  color: var(--color-error);
+  font-weight: var(--font-weight-semibold);
+}
+
+.input {
+  width: 100%;
+  padding: var(--space-1) 0 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--color-ink);
+  caret-color: var(--color-violet);
+  font-size: var(--font-size-display);
+  font-weight: var(--font-weight-regular);
+  font-variant-numeric: tabular-nums;
+  line-height: var(--line-height-tight);
+  text-align: right;
+}
+
+.input::placeholder {
+  color: var(--color-ink-muted);
+}
+
+.input::selection {
+  background: var(--color-error);
+  color: var(--color-panel);
+}
+
+.input[data-error='true'] {
+  color: var(--color-error);
+}
+
+/* Longer expressions get smaller text so they stay visible. */
+.input[data-size='m'] {
+  font-size: var(--font-size-display-m);
+}
+
+.input[data-size='s'] {
+  font-size: var(--font-size-display-s);
+}
+
+.input[data-size='xs'] {
+  font-size: var(--font-size-display-xs);
+}

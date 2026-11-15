@@ -1,7 +1,21 @@
 import { describe, expect, it } from 'vitest';
 
+import { HISTORY_ENTRIES } from '../../../mocks/fixtures';
 import type { Answer } from '../types';
-import { prepareForEvaluation, substituteAnswer } from './evaluation';
+import { prepareForEvaluation, reusableResult, substituteAnswer } from './evaluation';
+
+describe('reusableResult', () => {
+  const [scientific, rounded, exact] = HISTORY_ENTRIES;
+
+  it('reuses a plain result as it is', () => {
+    expect(reusableResult(exact)).toBe(exact.result);
+    expect(reusableResult(rounded)).toBe(rounded.result);
+  });
+
+  it('replaces a scientific result by its expression, which the backend can read', () => {
+    expect(reusableResult(scientific)).toBe(`(${scientific.expression})`);
+  });
+});
 
 describe('prepareForEvaluation', () => {
   it.each([

@@ -1,0 +1,74 @@
+.key {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  height: var(--key-height);
+  border: none;
+  border-radius: var(--radius-pill);
+  background: var(--color-key-fn);
+  color: var(--color-ink);
+  font-size: var(--font-size-key);
+  font-weight: var(--font-weight-semibold);
+  transition:
+    background-color var(--duration-fast),
+    transform var(--duration-press);
+}
+
+.key:hover {
+  background: var(--color-key-fn-hover);
+}
+
+.key:active {
+  transform: scale(var(--press-scale));
+}
+
+.key:disabled {
+  opacity: var(--opacity-disabled);
+  cursor: default;
+}
+
+.key[data-variant='number'] {
+  background: var(--color-key-num);
+  font-size: var(--font-size-key-number);
+  font-weight: var(--font-weight-medium);
+}
+
+.key[data-variant='number']:hover {
+  background: var(--color-key-num-hover);
+}
+
+.key[data-variant='operator'] {
+  background: var(--color-key-op);
+  color: var(--color-on-key-op);
+  font-size: var(--font-size-xl);
+}
+
+.key[data-variant='operator']:hover {
+  background: var(--color-key-op-hover);
+}
+
+.key[data-variant='equals'] {
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+  font-size: var(--font-size-xl);
+}
+
+.key[data-variant='equals']:hover {
+  background: var(--color-accent-hover);
+}
+
+.key[data-variant='clear'] {
+  background: var(--color-key-clear);
+  color: var(--color-on-key-clear);
+  font-weight: var(--font-weight-bold);
+}
+
+.key[data-variant='clear']:hover {
+  background: var(--color-key-clear-hover);
+}
+
+.key[data-variant='percent'] {
+  color: var(--color-pink);
+  font-size: var(--font-size-lg);
+}

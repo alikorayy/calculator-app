@@ -1,5 +1,5 @@
 import { OPERATOR_CHARACTERS, SYMBOLS } from '../constants';
-import type { Answer } from '../types';
+import type { Answer, HistoryEntry } from '../types';
 import { countOpenParentheses } from './expressionInput';
 
 /** A result that can be reused as written: a plain decimal number, no exponent. */
@@ -41,4 +41,17 @@ export function substituteAnswer(expression: string, answer: Answer | null): str
   const exact = !answer.approximate && PLAIN_NUMBER.test(answer.result);
   const replacement = `(${exact ? answer.result : answer.expression})`;
   return expression.replaceAll(SYMBOLS.ans, replacement);
+}
+
+/**
+ * Text to put back into the display when a history result is picked. A plain
+ * number is reused as it is; a result in scientific notation such as "1e+64"
+ * cannot be typed back into an expression, so the expression that produced it
+ * is used instead, in parentheses.
+ *
+ * @param entry - The picked history entry.
+ * @returns Text the backend accepts as part of an expression.
+ */
+export function reusableResult(entry: HistoryEntry): string {
+  return PLAIN_NUMBER.test(entry.result) ? entry.result : `(${entry.expression})`;
 }

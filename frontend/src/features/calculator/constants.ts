@@ -1,4 +1,67 @@
-import type { BinaryOperatorKey, KeyId } from './types';
+import type { BinaryOperatorKey, ClearLabel, KeyDefinition, KeyId } from './types';
+
+/**
+ * Keys of the function pad. Only operations the backend can calculate are
+ * offered; the frontend never calculates anything itself.
+ */
+export const FUNCTION_KEYS: readonly KeyDefinition[] = [
+  { id: 'sqrt', label: '√', ariaLabel: 'Square root', variant: 'function' },
+  { id: 'square', label: 'x²', ariaLabel: 'Square', variant: 'function' },
+  { id: 'power', label: 'xʸ', ariaLabel: 'Power', variant: 'function' },
+  { id: 'reciprocal', label: '1/x', ariaLabel: 'Reciprocal', variant: 'function' },
+  { id: 'ans', label: 'Ans', ariaLabel: 'Previous answer', variant: 'function' },
+  {
+    id: 'backspace',
+    label: '',
+    icon: 'backspace',
+    ariaLabel: 'Delete last character',
+    variant: 'function',
+  },
+];
+
+/** Keys of the basic pad, row by row. The clear key's label comes from the state. */
+export const BASIC_KEYS: readonly KeyDefinition[] = [
+  { id: 'openParen', label: '(', ariaLabel: 'Open parenthesis', variant: 'function' },
+  { id: 'closeParen', label: ')', ariaLabel: 'Close parenthesis', variant: 'function' },
+  { id: 'percent', label: '%', ariaLabel: 'Percent', variant: 'percent' },
+  { id: 'clear', label: 'AC', variant: 'clear' },
+  { id: '7', label: '7', variant: 'number' },
+  { id: '8', label: '8', variant: 'number' },
+  { id: '9', label: '9', variant: 'number' },
+  { id: 'divide', label: '÷', ariaLabel: 'Divide', variant: 'operator' },
+  { id: '4', label: '4', variant: 'number' },
+  { id: '5', label: '5', variant: 'number' },
+  { id: '6', label: '6', variant: 'number' },
+  { id: 'multiply', label: '×', ariaLabel: 'Multiply', variant: 'operator' },
+  { id: '1', label: '1', variant: 'number' },
+  { id: '2', label: '2', variant: 'number' },
+  { id: '3', label: '3', variant: 'number' },
+  { id: 'subtract', label: '−', ariaLabel: 'Subtract', variant: 'operator' },
+  { id: '0', label: '0', variant: 'number' },
+  { id: 'decimal', label: '.', ariaLabel: 'Decimal point', variant: 'number' },
+  { id: 'equals', label: '=', ariaLabel: 'Calculate', variant: 'equals' },
+  { id: 'add', label: '+', ariaLabel: 'Add', variant: 'operator' },
+];
+
+/** Spoken names of the clear key for each of its labels. */
+export const CLEAR_ARIA_LABELS: Readonly<Record<ClearLabel, string>> = {
+  AC: 'All clear',
+  CE: 'Clear entry',
+};
+
+/** Texts of the calculator interface. */
+export const LABELS = {
+  expression: 'Expression',
+  expressionPlaceholder: '0',
+  functionPad: 'Functions',
+  basicPad: 'Keypad',
+  history: 'History',
+  clearHistory: 'Clear',
+  historyEmpty:
+    'No calculations yet. Results show up here, and you can tap an expression or result to reuse it.',
+  switchToLight: 'Switch to light theme',
+  switchToDark: 'Switch to dark theme',
+} as const;
 
 /** Text inserted into the expression by each binary operator key, as shown on the keypad. */
 export const OPERATOR_SYMBOLS = {

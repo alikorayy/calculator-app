@@ -1,15 +1,10 @@
-import { APP_NAME } from '../shared/constants/app';
+import { CalculatorPage } from '../features/calculator/pages/CalculatorPage';
 
 /**
- * The application shell. It will render the calculator page; for now it only
- * proves that the toolchain builds, renders and tests a component.
+ * The application shell. There is a single page, so no router is needed.
  *
  * @returns The root element of the application.
  */
 export function App() {
-  return (
-    <main>
-      <h1>{APP_NAME}</h1>
-    </main>
-  );
+  return <CalculatorPage />;
 }

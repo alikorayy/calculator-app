@@ -1,3 +1,5 @@
+import type { IconName } from '../../shared/components/Icon/icons';
+
 /** A digit key. */
 export type DigitKey = '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9';
 
@@ -70,3 +72,18 @@ export interface HistoryEntry {
 
 /** Label of the clear key: clear the entry, or clear everything. */
 export type ClearLabel = 'CE' | 'AC';
+
+/** Visual style of a key. */
+export type KeyVariant = 'number' | 'operator' | 'equals' | 'clear' | 'percent' | 'function';
+
+/** Everything needed to render one key of a keypad. */
+export interface KeyDefinition {
+  id: KeyId;
+  /** Text on the key; ignored when `icon` is set. */
+  label: string;
+  /** Icon shown instead of the label. */
+  icon?: IconName;
+  /** Spoken name when the label alone is unclear, e.g. "Multiply" for ×. */
+  ariaLabel?: string;
+  variant: KeyVariant;
+}

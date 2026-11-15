@@ -1,0 +1,22 @@
+/*
+ * Centres the calculator on the screen. The padding never gets smaller than the
+ * safe-area insets, so nothing hides behind a notch or the home indicator.
+ */
+.page {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100dvh;
+  padding-top: max(var(--page-padding), env(safe-area-inset-top));
+  padding-right: max(var(--page-padding), env(safe-area-inset-right));
+  padding-bottom: max(var(--page-padding), env(safe-area-inset-bottom));
+  padding-left: max(var(--page-padding), env(safe-area-inset-left));
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--stack-gap);
+  width: 100%;
+  max-width: var(--content-max-width);
+}

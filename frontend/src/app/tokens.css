@@ -90,6 +90,14 @@
   --dialog-max-width: 440px;
   --dialog-max-height: min(560px, 80dvh);
   --display-min-height: 124px;
+  --stack-gap: 10px;
+  /* Each pad keeps at least this width; when both no longer fit side by side,
+     the function pad wraps above the basic pad. */
+  --pad-min-width-function: 300px;
+  --pad-min-width-basic: 340px;
+  --brand-space-below: clamp(24px, 6dvh, 56px);
+  --brand-pull-up: clamp(0px, 4dvh, 40px);
+  --opacity-disabled: 0.5;
 
   /* Motion */
   --duration-fast: 120ms;

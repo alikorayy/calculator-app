@@ -1,0 +1,21 @@
+.brand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--stack-gap);
+  margin-top: calc(-1 * var(--brand-pull-up));
+  padding-bottom: var(--brand-space-below);
+}
+
+.logo {
+  display: block;
+  width: auto;
+  height: var(--logo-height);
+}
+
+.name {
+  margin: 0;
+  font-size: var(--font-size-brand);
+  font-weight: var(--font-weight-semibold);
+  line-height: 1;
+}
