@@ -1,0 +1,10 @@
+# Keep the build context small and free of local artifacts; dependencies are
+# installed and the app is built inside the image.
+node_modules/
+dist/
+coverage/
+*.log
+.env
+.env.*
+Dockerfile
+.dockerignore

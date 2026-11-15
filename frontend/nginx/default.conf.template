@@ -1,0 +1,49 @@
+# Serves the built app and forwards /api to the calculator API, so the browser
+# only ever talks to this one origin (no CORS).
+#
+# ${API_UPSTREAM} is filled in from the environment when the container starts.
+# nginx's own variables such as $remote_addr are left alone.
+
+server {
+    listen 8080;
+    server_name _;
+    root /usr/share/nginx/html;
+
+    # Do not reveal the nginx version in headers and error pages.
+    server_tokens off;
+
+    gzip on;
+    gzip_types text/css application/javascript application/json image/svg+xml;
+
+    # The API sets its own security headers, so the ones below are only added
+    # to the files served here.
+    location /api/ {
+        proxy_pass ${API_UPSTREAM};
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        # Replace, never append: a client could otherwise send a forged
+        # X-Forwarded-For and get its own rate limit bucket for every request.
+        proxy_set_header X-Forwarded-For $remote_addr;
+        proxy_connect_timeout 5s;
+        # Longer than the API's own request timeout, so the API answers with
+        # its JSON error instead of nginx cutting the connection.
+        proxy_read_timeout 15s;
+    }
+
+    # Bundled files have a content hash in their name, so they never change
+    # and can be cached for a year.
+    location /assets/ {
+        include /etc/nginx/snippets/security-headers.conf;
+        add_header Cache-Control "public, max-age=31536000, immutable" always;
+        try_files $uri =404;
+    }
+
+    # index.html and the favicon keep their names across releases, so the
+    # browser checks for a new version every time. The app has a single page
+    # and no client-side routes, so unknown paths are a plain 404.
+    location / {
+        include /etc/nginx/snippets/security-headers.conf;
+        add_header Cache-Control "no-cache" always;
+        try_files $uri $uri/ =404;
+    }
+}
