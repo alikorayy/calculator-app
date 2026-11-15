@@ -1,0 +1,54 @@
+# Runs the whole calculator with one command: docker compose up --build
+# Then open http://localhost:3000 (or the WEB_PORT set in .env).
+#
+# Only the web service is published. The API is reachable just from inside the
+# network, through nginx, so the browser always talks to a single origin.
+# Every setting has a default here; .env.example lists the ones worth changing.
+
+name: calculator
+
+services:
+  api:
+    build: ./backend
+    environment:
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      RATE_LIMIT_RPS: ${RATE_LIMIT_RPS:-10}
+      RATE_LIMIT_BURST: ${RATE_LIMIT_BURST:-20}
+      # Only nginx may tell the API who the client is (X-Forwarded-For).
+      # It is the only other container on this network.
+      TRUSTED_PROXIES: ${NETWORK_SUBNET:-172.28.0.0/24}
+    expose:
+      - "8080"
+    networks:
+      - calculator
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    restart: unless-stopped
+
+  web:
+    build: ./frontend
+    ports:
+      - "${WEB_PORT:-3000}:8080"
+    depends_on:
+      # nginx starts only after the API answers its health check.
+      api:
+        condition: service_healthy
+    networks:
+      - calculator
+    read_only: true
+    # The only writable places: nginx's rendered config, cache and pid file.
+    # They belong to the unprivileged nginx user (uid 101) of the image.
+    tmpfs:
+      - /tmp:uid=101,gid=101
+      - /var/cache/nginx:uid=101,gid=101
+      - /etc/nginx/conf.d:uid=101,gid=101
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    restart: unless-stopped
+
+networks:
+  calculator:
+    ipam:
+      config:
+        - subnet: ${NETWORK_SUBNET:-172.28.0.0/24}
