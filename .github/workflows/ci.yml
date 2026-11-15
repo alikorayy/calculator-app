@@ -32,9 +32,19 @@ jobs:
       - name: Vet
         run: go vet ./...
       - name: Test with the race detector and coverage
-        run: go test -race -coverprofile=coverage.out ./...
+        # bash with pipefail, so a failing test still fails the step despite tee.
+        shell: bash
+        run: go test -race -coverprofile=coverage.out ./... | tee test-output.txt
       - name: Coverage summary
-        run: go tool cover -func=coverage.out | tail -n 1
+        run: |
+          {
+            echo "### Backend coverage"
+            echo
+            echo "| Package | Statements |"
+            echo "|---|---|"
+            sed -nE 's#^ok[[:space:]]+github.com/[^/]+/[^/]+/backend/?([^[:space:]]*)[[:space:]].*coverage: ([0-9.]+)%.*#| `\1` | \2% |#p' test-output.txt
+            echo "| **total** | **$(go tool cover -func=coverage.out | tail -n 1 | awk '{print $3}')** |"
+          } >> "$GITHUB_STEP_SUMMARY"
       - name: Build the HTML coverage report
         run: go tool cover -html=coverage.out -o coverage.html
       - name: Keep the coverage report
@@ -70,6 +80,15 @@ jobs:
         run: npm run format:check
       - name: Test with coverage
         run: npm run coverage
+      - name: Coverage summary
+        run: |
+          {
+            echo "### Frontend coverage"
+            echo
+            echo "| Metric | Covered |"
+            echo "|---|---|"
+            node -e "const t = require('./coverage/coverage-summary.json').total; console.log(['statements', 'branches', 'functions', 'lines'].map((k) => '| ' + k + ' | ' + t[k].pct + '% |').join('\n'))"
+          } >> "$GITHUB_STEP_SUMMARY"
       - name: Keep the coverage report
         uses: actions/upload-artifact@v4
         with:

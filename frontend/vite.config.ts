@@ -23,6 +23,8 @@ export default defineConfig({
     setupFiles: ['./src/setupTests.ts'],
     coverage: {
       provider: 'v8',
+      // text: table in the terminal; html: browsable report; json-summary: totals for CI.
+      reporter: ['text', 'html', 'json-summary'],
       include: ['src/**/*.{ts,tsx}'],
       exclude: ['src/main.tsx', 'src/setupTests.ts', 'src/mocks/**', 'src/**/*.d.ts'],
     },
