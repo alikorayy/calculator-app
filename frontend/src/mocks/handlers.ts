@@ -8,6 +8,7 @@ import { ERRORS, EXPRESSIONS, RESULTS } from './fixtures';
 const EVALUATE_ANSWERS = new Map<string, () => Response>([
   [EXPRESSIONS.exact, () => HttpResponse.json(RESULTS.exact)],
   [EXPRESSIONS.rounded, () => HttpResponse.json(RESULTS.rounded)],
+  [EXPRESSIONS.roundedTimesThree, () => HttpResponse.json(RESULTS.one)],
   [
     EXPRESSIONS.syntaxError,
     () => HttpResponse.json(ERRORS.syntaxError, { status: HTTP_STATUS.UNPROCESSABLE_ENTITY }),

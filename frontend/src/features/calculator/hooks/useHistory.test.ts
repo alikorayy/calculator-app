@@ -1,0 +1,68 @@
+import { act, renderHook } from '@testing-library/react';
+import { describe, expect, it } from 'vitest';
+
+import { HISTORY_STORAGE_KEY, MAX_HISTORY_ENTRIES } from '../constants';
+import { useHistory } from './useHistory';
+
+const ENTRY = { expression: '50−7×3', result: '29' };
+
+describe('useHistory', () => {
+  it('adds entries newest first, each with its own id', () => {
+    const { result } = renderHook(() => useHistory());
+
+    act(() => {
+      result.current.addEntry(ENTRY);
+      result.current.addEntry({ expression: '1÷3', result: '0.3333333333333333' });
+    });
+
+    expect(result.current.entries.map((entry) => entry.expression)).toEqual(['1÷3', '50−7×3']);
+    expect(new Set(result.current.entries.map((entry) => entry.id)).size).toBe(2);
+  });
+
+  it(`keeps at most ${String(MAX_HISTORY_ENTRIES)} entries`, () => {
+    const { result } = renderHook(() => useHistory());
+
+    act(() => {
+      for (let i = 0; i <= MAX_HISTORY_ENTRIES; i++) {
+        result.current.addEntry({ expression: String(i), result: String(i) });
+      }
+    });
+
+    expect(result.current.entries).toHaveLength(MAX_HISTORY_ENTRIES);
+    expect(result.current.entries[0]?.expression).toBe(String(MAX_HISTORY_ENTRIES));
+  });
+
+  it('is kept in session storage, so it survives a reload of the tab', () => {
+    const first = renderHook(() => useHistory());
+    act(() => {
+      first.result.current.addEntry(ENTRY);
+    });
+    first.unmount();
+
+    const reloaded = renderHook(() => useHistory());
+
+    expect(reloaded.result.current.entries).toMatchObject([ENTRY]);
+    expect(window.sessionStorage.getItem(HISTORY_STORAGE_KEY)).toContain(ENTRY.expression);
+  });
+
+  it('can be cleared', () => {
+    const { result } = renderHook(() => useHistory());
+    act(() => {
+      result.current.addEntry(ENTRY);
+    });
+
+    act(() => {
+      result.current.clearHistory();
+    });
+
+    expect(result.current.entries).toEqual([]);
+  });
+
+  it('ignores stored data that is not a valid history', () => {
+    window.sessionStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify([{ expression: 1 }]));
+
+    const { result } = renderHook(() => useHistory());
+
+    expect(result.current.entries).toEqual([]);
+  });
+});

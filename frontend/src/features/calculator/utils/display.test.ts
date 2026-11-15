@@ -1,7 +1,45 @@
 import { describe, expect, it } from 'vitest';
 
-import { DISPLAY_SIZE_THRESHOLDS } from '../constants';
-import { displaySizeFor, keyForKeyboardKey } from './display';
+import { INITIAL_CALCULATOR_STATE } from '../hooks/calculatorReducer';
+import { DISPLAY_SIZE_THRESHOLDS, TOP_LINE } from '../constants';
+import type { CalculatorState } from '../types';
+import { displaySizeFor, keyForKeyboardKey, topLineFor } from './display';
+
+describe('topLineFor', () => {
+  const answer = { result: '29', approximate: false, expression: '50−7×3' };
+
+  it.each<[string, CalculatorState, string]>([
+    ['no answer yet', INITIAL_CALCULATOR_STATE, 'Ans = 0'],
+    ['a previous answer', { ...INITIAL_CALCULATOR_STATE, answer }, 'Ans = 29'],
+    [
+      'a running calculation',
+      { ...INITIAL_CALCULATOR_STATE, status: 'evaluating' },
+      TOP_LINE.calculating,
+    ],
+    [
+      'an exact result',
+      { ...INITIAL_CALCULATOR_STATE, status: 'result', answer, evaluatedExpression: '50−7×3' },
+      '50−7×3 =',
+    ],
+    [
+      'a rounded result',
+      {
+        ...INITIAL_CALCULATOR_STATE,
+        status: 'result',
+        answer: { ...answer, approximate: true },
+        evaluatedExpression: '1÷3',
+      },
+      '1÷3 ≈',
+    ],
+    [
+      'an error',
+      { ...INITIAL_CALCULATOR_STATE, status: 'error', error: { message: 'Cannot divide by zero' } },
+      'Cannot divide by zero',
+    ],
+  ])('shows %s', (_, state, expected) => {
+    expect(topLineFor(state)).toBe(expected);
+  });
+});
 
 describe('displaySizeFor', () => {
   it.each([

@@ -47,7 +47,11 @@ describe('evaluateExpression', () => {
 
     expect(result).toMatchObject({
       ok: false,
-      error: { kind: 'calculation', code: 'SYNTAX_ERROR', position: 4 },
+      error: {
+        kind: 'calculation',
+        code: 'SYNTAX_ERROR',
+        position: ERRORS.syntaxError.error.position,
+      },
     });
   });
 

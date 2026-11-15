@@ -1,22 +1,25 @@
 import type { CalculationResponse, ErrorResponse } from '../shared/api/types';
 
-/** Expressions the default mock handler knows, as the UI would send them. */
+/** Expressions the default mock handler knows, as the keypad builds them. */
 export const EXPRESSIONS = {
-  exact: '50 - 7 × 3',
-  rounded: '1/3',
-  syntaxError: '2 + * 3',
-  divisionByZero: '5/0',
+  exact: '50−7×3',
+  rounded: '1÷3',
+  /** What "Ans×3" becomes after 1÷3 =, because the rounded answer is not reused. */
+  roundedTimesThree: '(1÷3)×3',
+  syntaxError: '2+*3',
+  divisionByZero: '5÷0',
 } as const;
 
 /** Successful answers, matching real responses of the backend. */
 export const RESULTS = {
   exact: { result: '29', approximate: false },
   rounded: { result: '0.3333333333333333', approximate: true },
+  one: { result: '1', approximate: false },
 } satisfies Record<string, CalculationResponse>;
 
 /** Error envelopes, matching real responses of the backend. */
 export const ERRORS = {
-  syntaxError: { error: { code: 'SYNTAX_ERROR', message: 'Unexpected "*"', position: 4 } },
+  syntaxError: { error: { code: 'SYNTAX_ERROR', message: 'Unexpected "*"', position: 2 } },
   divisionByZero: { error: { code: 'DIVISION_BY_ZERO', message: 'Cannot divide by zero' } },
   invalidRequest: { error: { code: 'INVALID_REQUEST', message: 'Unknown field "expresion"' } },
   payloadTooLarge: {

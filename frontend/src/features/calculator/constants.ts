@@ -42,6 +42,22 @@ export const OPERATOR_CHARACTERS: ReadonlySet<string> = new Set([
 /** Longest expression the backend accepts; keys that would exceed it are ignored. */
 export const MAX_EXPRESSION_LENGTH = 256;
 
+/** Texts of the line above the input. */
+export const TOP_LINE = {
+  calculating: 'Calculating…',
+  equals: '=',
+  /** Shown instead of "=" when the result was rounded. */
+  approximately: '≈',
+  answerPrefix: 'Ans = ',
+  noAnswer: '0',
+} as const;
+
+/** Session storage key of the calculation history. */
+export const HISTORY_STORAGE_KEY = 'calculator.history';
+
+/** How many calculations the history keeps; older ones are dropped. */
+export const MAX_HISTORY_ENTRIES = 50;
+
 /** Expression lengths above which the display text gets smaller. */
 export const DISPLAY_SIZE_THRESHOLDS = { m: 12, s: 18, xs: 26 } as const;
 
