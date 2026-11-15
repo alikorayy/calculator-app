@@ -16,6 +16,13 @@
   min-width: 0;
 }
 
+/* The anchor the first-visit hint is positioned against. */
+.actions {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
 .topLine {
   margin: 0 0 0 auto;
   min-width: 0;

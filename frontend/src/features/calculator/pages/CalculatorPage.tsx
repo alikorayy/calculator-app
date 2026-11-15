@@ -1,13 +1,15 @@
 import { useState } from 'react';
 
 import { IconButton } from '../../../shared/components/IconButton/IconButton';
+import { useFirstVisitHint } from '../../../shared/hooks/useFirstVisitHint';
 import { useTheme } from '../../../shared/hooks/useTheme';
 import { Brand } from '../components/Brand/Brand';
 import { Display } from '../components/Display/Display';
+import { FeatureHint, type FeatureHintItem } from '../components/FeatureHint/FeatureHint';
 import { HistoryDialog } from '../components/HistoryDialog/HistoryDialog';
 import { Keypad } from '../components/Keypad/Keypad';
 import { ThemeToggle } from '../components/ThemeToggle/ThemeToggle';
-import { LABELS } from '../constants';
+import { HINT_STORAGE_KEY, HINTS, LABELS } from '../constants';
 import { useCalculator } from '../hooks/useCalculator';
 import { useHistory } from '../hooks/useHistory';
 import { useKeyboard } from '../hooks/useKeyboard';
@@ -27,6 +29,13 @@ export function CalculatorPage() {
   const calculator = useCalculator({ onResult: history.addEntry });
   const { theme, toggleTheme } = useTheme();
   const [historyOpen, setHistoryOpen] = useState(false);
+  const { visible: hintVisible } = useFirstVisitHint(HINT_STORAGE_KEY);
+
+  // The theme icon shows the theme the button switches to, and so does the hint.
+  const hintItems: readonly FeatureHintItem[] = [
+    { icon: 'history', ...HINTS.history },
+    { icon: theme === 'dark' ? 'sun' : 'moon', ...HINTS.theme },
+  ];
 
   // While the history dialog is open, the keyboard belongs to it.
   useKeyboard(calculator.pressKey, !historyOpen);
@@ -62,6 +71,7 @@ export function CalculatorPage() {
               <ThemeToggle theme={theme} onToggle={toggleTheme} />
             </>
           }
+          actionsHint={hintVisible ? <FeatureHint items={hintItems} /> : null}
         />
         <Keypad
           clearLabel={calculator.clearLabel}

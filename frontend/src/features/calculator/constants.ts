@@ -105,6 +105,15 @@ export const OPERATOR_CHARACTERS: ReadonlySet<string> = new Set([
 /** Longest expression the backend accepts; keys that would exceed it are ignored. */
 export const MAX_EXPRESSION_LENGTH = 256;
 
+/** Local storage key that remembers that the first-visit hint was shown. */
+export const HINT_STORAGE_KEY = 'calculator.hintSeen';
+
+/** Content of the first-visit hint that points at the history and theme buttons. */
+export const HINTS = {
+  history: { label: 'History', description: 'Reuse past results' },
+  theme: { label: 'Theme', description: 'Dark or light' },
+} as const;
+
 /** Texts of the line above the input. */
 export const TOP_LINE = {
   calculating: 'Calculating…',

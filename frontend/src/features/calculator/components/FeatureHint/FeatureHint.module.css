@@ -1,0 +1,56 @@
+.hint {
+  position: absolute;
+  top: calc(100% + var(--hint-offset));
+  left: 0;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  width: max-content;
+  max-width: min(var(--hint-max-width), calc(100vw - 2 * var(--page-padding)));
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-item);
+  background: var(--color-hint-bg);
+  color: var(--color-hint-text);
+  box-shadow: var(--shadow-hint);
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-body);
+  pointer-events: none;
+  /* Appears a moment after the page, so it does not compete with the first paint. */
+  animation: appear var(--duration-hint) ease-out var(--delay-hint) both;
+}
+
+/* The arrow points at the middle of the two buttons the hint explains. */
+.hint::before {
+  content: '';
+  position: absolute;
+  bottom: 100%;
+  left: calc(var(--touch-target) - var(--hint-arrow-size));
+  width: calc(2 * var(--hint-arrow-size));
+  height: var(--hint-arrow-size);
+  background: var(--color-hint-bg);
+  clip-path: polygon(50% 0, 0 100%, 100% 100%);
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin: 0;
+}
+
+.label {
+  font-weight: var(--font-weight-semibold);
+}
+
+@keyframes appear {
+  from {
+    opacity: 0;
+    transform: translateY(var(--hint-slide));
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}

@@ -88,7 +88,9 @@ short user-facing text.
 
 **History and theme** live only in the browser: the history in session storage
 (last 50, cleared when the tab closes), the chosen theme in local storage. The
-theme follows the operating system until the user picks one.
+theme follows the operating system until the user picks one. On the first visit
+a small bubble points at the two buttons; it goes away with the first click or
+key press and is not shown again.
 
 ## Responsive design and accessibility
 

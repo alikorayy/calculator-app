@@ -99,6 +99,17 @@
   --brand-pull-up: clamp(0px, 4dvh, 40px);
   --opacity-disabled: 0.5;
 
+  /* First-visit hint: an inverted bubble, so it stands out in both themes. */
+  --color-hint-bg: var(--color-ink);
+  --color-hint-text: var(--color-panel);
+  --shadow-hint: 0 8px 24px oklch(0.05 0.04 300 / 0.35);
+  --hint-max-width: 260px;
+  --hint-arrow-size: 8px;
+  --hint-offset: 10px;
+  --hint-slide: 6px;
+  --duration-hint: 300ms;
+  --delay-hint: 600ms;
+
   /* Motion */
   --duration-fast: 120ms;
   --duration-press: 80ms;

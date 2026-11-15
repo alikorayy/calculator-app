@@ -16,6 +16,8 @@ export interface DisplayProps {
   errorPosition?: number;
   /** Controls shown at the start of the top line (history, theme). */
   actions: ReactNode;
+  /** Optional bubble that explains `actions`; it is placed under them. */
+  actionsHint?: ReactNode;
   /** Called when the user edits the text directly. */
   onExpressionChange: (expression: string) => void;
   /** Called when the user presses Enter in the input. */
@@ -36,6 +38,7 @@ export function Display({
   hasError,
   errorPosition,
   actions,
+  actionsHint,
   onExpressionChange,
   onSubmit,
 }: DisplayProps) {
@@ -62,7 +65,10 @@ export function Display({
   return (
     <section className={styles.display}>
       <div className={styles.topRow}>
-        {actions}
+        <div className={styles.actions}>
+          {actions}
+          {actionsHint}
+        </div>
         <p id={topLineId} className={styles.topLine} data-error={hasError} aria-live="polite">
           {topLine}
         </p>

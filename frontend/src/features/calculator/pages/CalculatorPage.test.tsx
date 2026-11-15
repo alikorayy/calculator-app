@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 
 import { ERRORS, EXPRESSIONS, RESULTS } from '../../../mocks/fixtures';
 import { CLOSE_LABEL } from '../../../shared/constants/ui';
-import { LABELS } from '../constants';
+import { HINT_STORAGE_KEY, HINTS, LABELS } from '../constants';
 import { CalculatorPage } from './CalculatorPage';
 
 /** Clicks keypad keys by their accessible names. */
@@ -17,6 +17,35 @@ async function click(user: UserEvent, ...names: string[]) {
 function display() {
   return screen.getByRole('textbox', { name: LABELS.expression });
 }
+
+describe('CalculatorPage first-visit hint', () => {
+  it('points at the history and theme buttons on the first visit', () => {
+    render(<CalculatorPage />);
+
+    expect(screen.getByText(HINTS.history.description)).toBeInTheDocument();
+    expect(screen.getByText(HINTS.theme.description)).toBeInTheDocument();
+  });
+
+  it('goes away with the first interaction and does not come back after a reload', async () => {
+    const user = userEvent.setup();
+    const { unmount } = render(<CalculatorPage />);
+
+    await click(user, '7');
+    expect(screen.queryByText(HINTS.history.description)).not.toBeInTheDocument();
+
+    unmount();
+    render(<CalculatorPage />);
+    expect(screen.queryByText(HINTS.history.description)).not.toBeInTheDocument();
+  });
+
+  it('is not shown to someone who has seen it before', () => {
+    window.localStorage.setItem(HINT_STORAGE_KEY, 'true');
+
+    render(<CalculatorPage />);
+
+    expect(screen.queryByText(HINTS.history.description)).not.toBeInTheDocument();
+  });
+});
 
 describe('CalculatorPage', () => {
   it('calculates with the keypad and shows the result with its expression', async () => {
