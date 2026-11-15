@@ -1,0 +1,87 @@
+# Runs on every push to main and on every pull request. The three jobs are
+# independent and run in parallel; each repeats what a developer runs locally.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# Read-only access is enough: the workflow only checks the code out.
+permissions:
+  contents: read
+
+# A newer push to the same branch makes the older run pointless.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: Backend (Go)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: backend/go.mod
+          cache-dependency-path: backend/go.sum
+      - name: Vet
+        run: go vet ./...
+      - name: Test with the race detector and coverage
+        run: go test -race -coverprofile=coverage.out ./...
+      - name: Coverage summary
+        run: go tool cover -func=coverage.out | tail -n 1
+      - name: Lint
+        uses: golangci/golangci-lint-action@v8
+        with:
+          # The version the code was checked with locally.
+          version: v2.15
+          working-directory: backend
+
+  frontend:
+    name: Frontend (React)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          # The same Node version as the frontend Dockerfile and local development.
+          node-version: 22.12.0
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - name: Lint
+        run: npm run lint
+      - name: Check formatting
+        run: npm run format:check
+      - name: Test with coverage
+        run: npm run coverage
+      - name: Build
+        run: npm run build
+
+  docker:
+    name: Docker images
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build the images and start the stack
+        run: docker compose up --build --wait --wait-timeout 120
+      - name: Smoke test through nginx
+        run: |
+          curl --fail --silent --show-error http://localhost:3000/ > /dev/null
+          curl --fail --silent --show-error http://localhost:3000/api/v1/evaluate \
+            -H 'Content-Type: application/json' \
+            -d '{"expression": "50 - 7 * 3"}' | grep --quiet '"result":"29"'
+      - name: Show the logs when something failed
+        if: failure()
+        run: docker compose logs
+      - name: Stop the stack
+        if: always()
+        run: docker compose down
