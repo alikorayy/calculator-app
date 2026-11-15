@@ -10,9 +10,11 @@ frontend/src/
 ├── app/                      # application shell
 │   ├── App.tsx
 │   ├── providers.tsx         # only if providers are actually needed
-│   └── tokens.css            # design tokens (colours, spacing, typography)
+│   ├── tokens.css            # design tokens (colours, spacing, typography)
+│   └── global.css            # base styles
 ├── features/
 │   └── calculator/
+│       ├── pages/            # page containers: the only place that combines hooks and components
 │       ├── components/       # presentational components (Display, Keypad, Key, ...)
 │       ├── hooks/            # stateful logic (useCalculator, useEvaluate, ...)
 │       ├── utils/            # pure functions (input rules, display formatting)
@@ -20,6 +22,7 @@ frontend/src/
 │       └── types.ts
 ├── shared/
 │   ├── api/                  # typed HTTP client, API types, error mapping
+│   ├── components/           # generic UI building blocks (Icon, IconButton, Dialog)
 │   ├── hooks/                # hooks shared across features
 │   └── constants/            # cross-cutting constants
 ├── mocks/                    # test fixtures and MSW handlers
