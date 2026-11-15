@@ -15,7 +15,7 @@ async function click(user: UserEvent, ...names: string[]) {
 }
 
 function display() {
-  return screen.getByRole('textbox', { name: LABELS.expression });
+  return screen.getByRole<HTMLInputElement>('textbox', { name: LABELS.expression });
 }
 
 describe('CalculatorPage first-visit hint', () => {
@@ -107,6 +107,32 @@ describe('CalculatorPage', () => {
 
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     expect(display()).toHaveValue(RESULTS.exact.result);
+  });
+
+  it('applies the same input rules whether or not the display has focus', async () => {
+    const user = userEvent.setup();
+    render(<CalculatorPage />);
+
+    await user.click(display());
+    await user.keyboard('5%0');
+    expect(display()).toHaveValue('5%×0');
+
+    await user.click(screen.getByRole('button', { name: 'Clear entry' }));
+    await user.click(document.body);
+    await user.keyboard('5%0');
+    expect(display()).toHaveValue('5%×0');
+  });
+
+  it('lets text inside the display be edited freely', async () => {
+    const user = userEvent.setup();
+    render(<CalculatorPage />);
+    await click(user, '1', '2', '3');
+
+    display().focus();
+    display().setSelectionRange(1, 2);
+    await user.keyboard('9');
+
+    expect(display()).toHaveValue('193');
   });
 
   it('calculates an expression typed into the display when Enter is pressed', async () => {

@@ -1,4 +1,4 @@
-import { renderHook } from '@testing-library/react';
+import { fireEvent, renderHook } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -29,20 +29,77 @@ describe('useKeyboard', () => {
     expect(onKey).not.toHaveBeenCalled();
   });
 
-  it('leaves typing in a text field to the field', async () => {
-    const user = userEvent.setup();
+  describe('in a text field', () => {
+    /** Adds a focused text input with the caret placed at `caret`, and removes it after the test. */
+    function focusedInput(value: string, caret: [number, number]) {
+      const input = document.createElement('input');
+      input.value = value;
+      document.body.append(input);
+      input.focus();
+      input.setSelectionRange(...caret);
+      return input;
+    }
+
+    it('handles keys typed at the end as calculator keys, like the keypad', async () => {
+      const user = userEvent.setup();
+      const onKey = vi.fn();
+      const input = focusedInput('12', [2, 2]);
+      renderHook(() => {
+        useKeyboard(onKey);
+      });
+
+      await user.keyboard('5%');
+
+      expect(onKey.mock.calls).toEqual([['5'], ['percent']]);
+      expect(input.value).toBe('12');
+      input.remove();
+    });
+
+    it.each([
+      ['the caret is in the middle', [1, 1]],
+      ['part of the text is selected', [0, 2]],
+    ] as const)('leaves editing to the field when %s', async (_, caret) => {
+      const user = userEvent.setup();
+      const onKey = vi.fn();
+      const input = focusedInput('12', [...caret]);
+      renderHook(() => {
+        useKeyboard(onKey);
+      });
+
+      await user.keyboard('5');
+
+      expect(onKey).not.toHaveBeenCalled();
+      expect(input.value).not.toBe('12');
+      input.remove();
+    });
+
+    it('ignores a key that another handler already dealt with', async () => {
+      const user = userEvent.setup();
+      const onKey = vi.fn();
+      const input = focusedInput('', [0, 0]);
+      input.addEventListener('keydown', (event) => {
+        event.preventDefault();
+      });
+      renderHook(() => {
+        useKeyboard(onKey);
+      });
+
+      await user.keyboard('{Enter}');
+
+      expect(onKey).not.toHaveBeenCalled();
+      input.remove();
+    });
+  });
+
+  it('ignores keys while an input method is composing text', () => {
     const onKey = vi.fn();
-    const input = document.createElement('input');
-    document.body.append(input);
     renderHook(() => {
       useKeyboard(onKey);
     });
 
-    await user.click(input);
-    await user.keyboard('12');
+    fireEvent.keyDown(window, { key: '7', isComposing: true });
 
     expect(onKey).not.toHaveBeenCalled();
-    input.remove();
   });
 
   it('lets Enter activate a focused button instead of meaning "="', async () => {

@@ -72,9 +72,11 @@ CalculatorPage
 displays what the server returns. Key presses go through pure input rules that
 keep the expression well formed, as on Google's and Windows' calculators: a
 second operator replaces the first, a number has one decimal point, `)`, `%`,
-x² and 1/x need an operand before them, open parentheses close on `=`. Text typed
-directly into the display is not restricted; the backend validates everything
-and a syntax error highlights the offending character.
+x² and 1/x need an operand before them, open parentheses close on `=`. The
+physical keyboard follows the same rules, also while the display has focus and
+the caret is at the end of the text. Editing inside the text (caret in the
+middle, a selection, pasting) is free; the backend validates everything, and a
+syntax error highlights the offending character.
 
 **Ans stays exact.** After `=`, an operator continues from the result as `Ans`.
 A rounded or scientific result is never sent back as its rounded text: `Ans` is
