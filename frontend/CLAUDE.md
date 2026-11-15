@@ -48,7 +48,8 @@ frontend/src/
 - Every exported function, hook and component has a JSDoc comment describing its purpose,
   parameters and return value.
 - Constants live in the feature's `constants.ts`; cross-cutting ones in `src/shared/constants`.
-  No hardcoded strings, numbers, colours or sizes in components.
+  No hardcoded strings, numbers, colours or sizes in components. Exception: the literal tags of a
+  discriminated union (e.g. `kind: 'timeout'`) stay literals, because the type checks them.
 - Styling uses CSS Modules and the design tokens in `tokens.css`. No inline styles.
 - Code passes ESLint and is formatted with Prettier. No `console.log`.
 
