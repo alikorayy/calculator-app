@@ -1,0 +1,109 @@
+/*
+ * Design tokens: every colour, size and timing used by the components.
+ *
+ * Each colour is written once with light-dark(<light>, <dark>). Which value
+ * applies follows `color-scheme`: by default the operating system's preference,
+ * or the theme chosen in the app (data-theme on <html>). This also means the
+ * right theme is shown before any JavaScript runs.
+ */
+:root {
+  color-scheme: dark light;
+
+  /* Page */
+  --color-bg-top: light-dark(oklch(1 0 0), oklch(0.215 0.006 280));
+  --color-bg: light-dark(oklch(1 0 0), oklch(0.2 0.065 302));
+  --color-glow: light-dark(transparent, oklch(0.5 0.19 310 / 0.42));
+  --color-panel: light-dark(oklch(1 0 0), oklch(0.215 0.055 295));
+  --color-line: light-dark(oklch(0.91 0.006 300), oklch(0.34 0.065 295));
+  --color-backdrop: oklch(0.1 0.04 300 / 0.6);
+  --shadow-dialog: 0 24px 60px oklch(0.05 0.04 300 / 0.5);
+
+  /* Text */
+  --color-ink: light-dark(oklch(0.27 0.08 300), oklch(0.97 0.01 300));
+  --color-ink-muted: light-dark(oklch(0.5 0.03 300), oklch(0.76 0.045 295));
+  --color-error: light-dark(oklch(0.55 0.19 20), oklch(0.78 0.14 20));
+  --color-violet: light-dark(oklch(0.48 0.2 295), oklch(0.76 0.15 300));
+  --color-pink: light-dark(oklch(0.48 0.2 295), oklch(0.76 0.15 355));
+  --color-focus: var(--color-violet);
+
+  /* Keys */
+  --color-key-fn: light-dark(oklch(0.955 0.008 300), oklch(0.265 0.06 295));
+  --color-key-fn-hover: light-dark(oklch(0.925 0.012 300), oklch(0.305 0.068 295));
+  --color-key-num: light-dark(oklch(0.975 0.003 300), oklch(0.33 0.07 298));
+  --color-key-num-hover: light-dark(oklch(0.945 0.006 300), oklch(0.37 0.078 298));
+  --color-key-op: light-dark(oklch(0.3 0.09 300), oklch(0.265 0.06 295));
+  --color-key-op-hover: light-dark(oklch(0.36 0.1 300), oklch(0.305 0.068 295));
+  --color-on-key-op: light-dark(oklch(0.99 0.004 300), oklch(0.97 0.01 300));
+  --color-key-clear: light-dark(oklch(0.84 0.07 325), oklch(0.265 0.06 295));
+  --color-key-clear-hover: light-dark(oklch(0.8 0.08 325), oklch(0.305 0.068 295));
+  --color-on-key-clear: light-dark(oklch(0.27 0.08 300), oklch(0.8 0.14 60));
+  --color-accent: light-dark(oklch(0.3 0.09 300), oklch(0.85 0.12 170));
+  --color-accent-hover: light-dark(oklch(0.36 0.1 300), oklch(0.89 0.11 170));
+  --color-on-accent: light-dark(oklch(0.99 0.004 300), oklch(0.22 0.06 295));
+
+  /* Typography */
+  --font-family: 'Figtree', system-ui, sans-serif;
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --font-size-sm: 14px;
+  --font-size-md: 15px;
+  --font-size-key: 16px;
+  --font-size-lg: 17px;
+  --font-size-key-number: 20px;
+  --font-size-xl: 22px;
+  --font-size-brand: 30px;
+  --line-height-tight: 1.15;
+  --line-height-body: 1.5;
+
+  /* Display text shrinks as the expression grows; each step is fluid with the viewport width. */
+  --font-size-display: clamp(36px, 5.8vw, 52px);
+  --font-size-display-m: clamp(29px, 4.6vw, 42px);
+  --font-size-display-s: clamp(24px, 3.8vw, 34px);
+  --font-size-display-xs: clamp(18px, 2.9vw, 26px);
+
+  /* Spacing */
+  --space-1: 2px;
+  --space-2: 4px;
+  --space-3: 8px;
+  --space-4: 12px;
+  --space-5: 16px;
+  --space-6: 20px;
+  --space-7: 24px;
+  --space-8: 28px;
+  --page-padding: clamp(12px, 4vw, 40px);
+
+  /* Shape */
+  --radius-pill: 999px;
+  --radius-panel: 24px;
+  --radius-item: 16px;
+  --border-width: 1px;
+
+  /* Sizes. Key height follows the dynamic viewport height (dvh), so it adapts to
+     landscape phones and to mobile browser bars appearing and disappearing. */
+  --key-height: clamp(46px, 7.4dvh, 56px);
+  --touch-target: 44px;
+  --icon-size: 20px;
+  --logo-height: 34px;
+  --content-max-width: 780px;
+  --dialog-max-width: 440px;
+  --dialog-max-height: min(560px, 80dvh);
+  --display-min-height: 124px;
+
+  /* Motion */
+  --duration-fast: 120ms;
+  --duration-press: 80ms;
+  --duration-theme: 200ms;
+  --press-scale: 0.97;
+  --focus-ring-width: 2px;
+  --focus-ring-offset: 2px;
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+}
+
+:root[data-theme='light'] {
+  color-scheme: light;
+}

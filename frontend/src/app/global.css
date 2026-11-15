@@ -1,0 +1,52 @@
+/* Global base styles. Component styles live next to each component as CSS Modules. */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+  font-family: var(--font-family);
+  color: var(--color-ink);
+  background:
+    radial-gradient(85% 65% at 50% 112%, var(--color-glow), transparent 75%),
+    linear-gradient(180deg, var(--color-bg-top) 0%, var(--color-bg) 40%, var(--color-bg) 100%);
+  -webkit-font-smoothing: antialiased;
+  transition:
+    background-color var(--duration-theme),
+    color var(--duration-theme);
+}
+
+button,
+input {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+:focus-visible {
+  outline: var(--focus-ring-width) solid var(--color-focus);
+  outline-offset: var(--focus-ring-offset);
+}
+
+/* Respect users who ask the system for less motion. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}

@@ -1,0 +1,20 @@
+.button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: var(--touch-target);
+  height: var(--touch-target);
+  border: none;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--color-ink-muted);
+  transition:
+    background-color var(--duration-fast),
+    color var(--duration-fast);
+}
+
+.button:hover {
+  background: var(--color-key-fn);
+  color: var(--color-ink);
+}
