@@ -21,9 +21,29 @@ change settings such as the port, log level or rate limits, copy
 [`.env.example`](.env.example) to `.env` and edit the values; `docker compose up`
 picks it up automatically.
 
-Stop it with `docker compose down`. Without Docker (Go 1.25, Node.js 22.12+),
-run `go run ./cmd/calculator-api` in `backend/` and `npm install && npm run dev`
-in `frontend/`, then open <http://localhost:5173>.
+Stop it with `docker compose down`.
+
+### Run without Docker
+
+Requires Go 1.25 and Node.js 22.12 or newer. Start the backend first, in its
+own terminal:
+
+```sh
+cd backend
+go run ./cmd/calculator-api        # API on http://localhost:8080
+```
+
+Then the frontend, in a second terminal:
+
+```sh
+cd frontend
+npm install
+npm run dev                        # app on http://localhost:5173
+```
+
+The Vite dev server forwards `/api` to the backend on port 8080, so the browser
+still talks to a single origin. In this setup, send the curl examples below to
+`localhost:8080` instead of `localhost:3000`.
 
 ## Architecture
 
@@ -169,6 +189,23 @@ curl -s localhost:3000/api/v1/evaluate \
 The full contract is in [`backend/api/openapi.yaml`](backend/api/openapi.yaml).
 
 ## Design decisions
+
+### Assumptions
+
+- **Modern calculator behaviour.** The Google and Windows calculators are the
+  reference: whole expressions with standard precedence (`50 − 7 × 3 = 29`),
+  and their percent rule (`50 + 10% = 55`, `200 × 10% = 20`).
+- **Display precision.** Results are rounded once, to 16 significant digits as
+  on the Windows calculator; very large or small values use scientific notation
+  (`1e+20`).
+- **Input format.** `.` is the decimal separator; `×`/`*`, `÷`/`/` and `−`/`-`
+  are both accepted; square root is written as a function, `√(…)`; `2(3)` means
+  `2 × 3`.
+- **Reasonable limits.** Expressions of up to 256 characters, 32 digits per
+  number and 32 nested parentheses are enough for a calculator; anything
+  longer is rejected with a clear error instead of being computed.
+- **Public and stateless.** No accounts or authentication; no data is stored on
+  the server. History and theme stay in the user's browser.
 
 ### Evaluation model: considered alternatives
 
