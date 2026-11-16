@@ -39,15 +39,24 @@ export function applyInputKey(expression: string, key: InputKey, context: InputC
   return next.length > MAX_EXPRESSION_LENGTH ? expression : next;
 }
 
+/** Endings of a finished operand: a new operand after them needs a × in between. */
+const CLOSED_OPERAND_ENDINGS = [
+  SYMBOLS.closeParen,
+  SYMBOLS.percent,
+  SYMBOLS.square,
+  SYMBOLS.reciprocal,
+  SYMBOLS.ans,
+];
+
 /**
- * Removes the last element of the expression: "Ans" and "√(" go as a whole,
- * anything else one character at a time.
+ * Removes the last element of the expression: "Ans", "√(" and "⁻¹" go as a
+ * whole, anything else one character at a time.
  *
  * @param expression - The current expression.
  * @returns The expression without its last element.
  */
 export function deleteLast(expression: string): string {
-  for (const unit of [SYMBOLS.ans, SYMBOLS.sqrt]) {
+  for (const unit of [SYMBOLS.ans, SYMBOLS.sqrt, SYMBOLS.reciprocal]) {
     if (expression.endsWith(unit)) {
       return expression.slice(0, -unit.length);
     }
@@ -75,13 +84,17 @@ export function countOpenParentheses(expression: string): number {
 
 /**
  * Whether the expression ends with something that can be followed by an
- * operator: a number, ")", "%" or "Ans".
+ * operator: a number, ")", "%", "²", "⁻¹" or "Ans".
  *
  * @param expression - Any expression.
  * @returns True when the last element is an operand.
  */
 export function endsWithOperand(expression: string): boolean {
-  return /[\d.)%]$/.test(expression) || expression.endsWith(SYMBOLS.ans);
+  return /[\d.]$/.test(expression) || endsWithClosedOperand(expression);
+}
+
+function endsWithClosedOperand(expression: string): boolean {
+  return CLOSED_OPERAND_ENDINGS.some((ending) => expression.endsWith(ending));
 }
 
 /** After a result, operators continue from it as "Ans"; other keys start over. */
@@ -171,12 +184,11 @@ function insertMinus(expression: string): string {
 }
 
 /**
- * Inserts × when a new operand directly follows ")", "%" or "Ans", so "Ans"
- * then "5" means Ans × 5 rather than a longer number.
+ * Inserts × when a new operand directly follows a finished operand such as
+ * ")", "%", "²" or "Ans", so "Ans" then "5" means Ans × 5 rather than a longer number.
  */
 function withImplicitMultiply(expression: string): string {
-  const endsWithClosedOperand = /[)%]$/.test(expression) || expression.endsWith(SYMBOLS.ans);
-  return endsWithClosedOperand ? expression + OPERATOR_SYMBOLS.multiply : expression;
+  return endsWithClosedOperand(expression) ? expression + OPERATOR_SYMBOLS.multiply : expression;
 }
 
 /** The digits and decimal point at the end of the expression, e.g. "12." in "3+12.". */

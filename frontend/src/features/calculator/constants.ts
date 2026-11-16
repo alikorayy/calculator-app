@@ -79,10 +79,10 @@ export const SYMBOLS = {
   openParen: '(',
   closeParen: ')',
   sqrt: '√(',
-  /** x² is "to the power of two". */
-  square: '^2',
-  /** 1/x is "to the power of minus one", so it applies to the operand before it. */
-  reciprocal: '^(−1)',
+  /** x² squares the whole operand before it: 3²⁻¹ is (3²)⁻¹. */
+  square: '²',
+  /** 1/x is the reciprocal of the whole operand before it. */
+  reciprocal: '⁻¹',
   ans: 'Ans',
   zero: '0',
 } as const;

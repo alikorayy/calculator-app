@@ -80,10 +80,17 @@ describe('applyInputKey', () => {
       [['5', '0', 'percent'], '50%'],
       [['5', 'add', 'percent'], '5+'],
       [['5', 'percent', '3'], '5%×3'],
-      [['3', 'square'], '3^2'],
+      [['3', 'square'], '3²'],
       [['add', 'square'], ''],
-      [['4', 'reciprocal'], '4^(−1)'],
-      [['openParen', '2', 'add', '3', 'closeParen', 'square'], '(2+3)^2'],
+      [['4', 'reciprocal'], '4⁻¹'],
+      [['openParen', '2', 'add', '3', 'closeParen', 'square'], '(2+3)²'],
+      // Chained keys apply to the whole operand before them, as on Windows.
+      [['3', 'square', 'reciprocal'], '3²⁻¹'],
+      [['3', 'reciprocal', 'reciprocal'], '3⁻¹⁻¹'],
+      [['2', 'power', '3', 'square'], '2^3²'],
+      [['3', 'square', 'power', '3'], '3²^3'],
+      [['3', 'square', '5'], '3²×5'],
+      [['4', 'reciprocal', 'decimal'], '4⁻¹×0.'],
     ])('%j → %s', (keys, expected) => {
       expect(press(keys)).toBe(expected);
     });
@@ -113,7 +120,7 @@ describe('applyInputKey', () => {
       [['2', 'ans'], '2×Ans'],
       [['ans', '5'], 'Ans×5'],
       [['ans', 'decimal'], 'Ans×0.'],
-      [['ans', 'square'], 'Ans^2'],
+      [['ans', 'square'], 'Ans²'],
     ])('%j → %s', (keys, expected) => {
       expect(press(keys, TYPING_WITH_ANSWER)).toBe(expected);
     });
@@ -124,8 +131,8 @@ describe('applyInputKey', () => {
       [['add', '2'], 'Ans+2'],
       [['subtract', '1'], 'Ans−1'],
       [['percent'], 'Ans%'],
-      [['square'], 'Ans^2'],
-      [['reciprocal'], 'Ans^(−1)'],
+      [['square'], 'Ans²'],
+      [['reciprocal'], 'Ans⁻¹'],
       [['7'], '7'],
       [['decimal'], '0.'],
       [['openParen'], '('],
@@ -154,6 +161,8 @@ describe('deleteLast', () => {
     ['√(', ''],
     ['2√(', '2'],
     ['4^(−1)', '4^(−1'],
+    ['4⁻¹', '4'],
+    ['3²', '3'],
   ])('%s → %s', (expression, expected) => {
     expect(deleteLast(expression)).toBe(expected);
   });
@@ -179,6 +188,8 @@ describe('endsWithOperand', () => {
     ['(1)', true],
     ['50%', true],
     ['2×Ans', true],
+    ['3²', true],
+    ['4⁻¹', true],
     ['', false],
     ['1+', false],
     ['(', false],
