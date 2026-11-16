@@ -105,6 +105,12 @@ export const OPERATOR_CHARACTERS: ReadonlySet<string> = new Set([
 /** Longest expression the backend accepts; keys that would exceed it are ignored. */
 export const MAX_EXPRESSION_LENGTH = 256;
 
+/** Deepest nesting of parentheses the backend accepts. */
+export const MAX_NESTING_DEPTH = 32;
+
+/** Base of scientific notation, used to write "1.5e+20" as "1.5×10^20". */
+export const SCIENTIFIC_BASE = '10';
+
 /** Local storage key that remembers that the first-visit hint was shown. */
 export const HINT_STORAGE_KEY = 'calculator.hintSeen';
 

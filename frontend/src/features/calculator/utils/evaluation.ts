@@ -1,4 +1,11 @@
-import { OPERATOR_CHARACTERS, SYMBOLS } from '../constants';
+import {
+  MAX_EXPRESSION_LENGTH,
+  MAX_NESTING_DEPTH,
+  OPERATOR_CHARACTERS,
+  OPERATOR_SYMBOLS,
+  SCIENTIFIC_BASE,
+  SYMBOLS,
+} from '../constants';
 import type { Answer, HistoryEntry } from '../types';
 import { countOpenParentheses } from './expressionInput';
 
@@ -30,6 +37,11 @@ export function prepareForEvaluation(expression: string): string | null {
  * would lose precision: the expression that produced it is used instead. So
  * 1/3 = followed by × 3 = evaluates (1/3)×3 and gives exactly 1.
  *
+ * Each such step nests the previous expression once more. When that would go
+ * past the backend's length or nesting limit (after about 30 chained steps),
+ * the displayed result is used instead: precise to 16 digits, like on other
+ * calculators, and the chain starts short again.
+ *
  * @param expression - The expression as shown, possibly containing "Ans".
  * @param answer - The previous answer, if any.
  * @returns The expression to send to the server.
@@ -38,8 +50,44 @@ export function substituteAnswer(expression: string, answer: Answer | null): str
   if (answer === null || !expression.includes(SYMBOLS.ans)) {
     return expression;
   }
-  const replacement = `(${isExactText(answer.result, answer.approximate) ? answer.result : answer.expression})`;
-  return expression.replaceAll(SYMBOLS.ans, replacement);
+  const source = isExactText(answer.result, answer.approximate) ? answer.result : answer.expression;
+  const exact = expression.replaceAll(SYMBOLS.ans, `(${source})`);
+  if (exact.length <= MAX_EXPRESSION_LENGTH && nestingDepth(exact) <= MAX_NESTING_DEPTH) {
+    return exact;
+  }
+  return expression.replaceAll(SYMBOLS.ans, `(${typeableNumber(answer.result)})`);
+}
+
+/** Result text in scientific notation, e.g. "1.5e+20" or "-2e-7". */
+const SCIENTIFIC_NUMBER = /^(-?[\d.]+)e([+-])(\d+)$/;
+
+/**
+ * Writes a result so the backend can read it back: "1.5e+20" becomes
+ * "1.5×10^20" and "2e-7" becomes "2×10^−7"; plain numbers stay as they are.
+ */
+function typeableNumber(result: string): string {
+  const match = SCIENTIFIC_NUMBER.exec(result);
+  if (match === null) {
+    return result;
+  }
+  const [, mantissa = '', sign, exponent = ''] = match;
+  const exponentSign = sign === '-' ? OPERATOR_SYMBOLS.subtract : '';
+  return `${mantissa}${OPERATOR_SYMBOLS.multiply}${SCIENTIFIC_BASE}${OPERATOR_SYMBOLS.power}${exponentSign}${exponent}`;
+}
+
+/** The deepest nesting of parentheses in an expression; "√(" opens one too. */
+function nestingDepth(expression: string): number {
+  let depth = 0;
+  let deepest = 0;
+  for (const character of expression) {
+    if (character === SYMBOLS.openParen) {
+      depth++;
+      deepest = Math.max(deepest, depth);
+    } else if (character === SYMBOLS.closeParen) {
+      depth = Math.max(depth - 1, 0);
+    }
+  }
+  return deepest;
 }
 
 /**

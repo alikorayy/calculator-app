@@ -84,7 +84,10 @@ replaced by the expression that produced it, so `1 ÷ 3 =` followed by `× 3 =`
 sends `(1÷3)×3` and shows exactly `1`. Rounded results are marked with `≈`.
 A result picked from the history follows the same rule, and an expression with
 `Ans` comes back as it was sent, since `Ans` may mean another value by then.
-Pressing `=` while a result is shown does nothing.
+Pressing `=` while a result is shown does nothing. Each chained step nests the
+previous expression once more; when that would pass the backend's length or
+nesting limit (after about 30 steps), the displayed 16-digit result is used
+instead and the chain starts short again.
 
 **Errors.** The API client never throws; every outcome is a typed result
 (calculation error, invalid request, rate limited, server, network, time-out,

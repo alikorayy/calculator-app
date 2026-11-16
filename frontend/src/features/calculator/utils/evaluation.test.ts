@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { HISTORY_ENTRIES } from '../../../mocks/fixtures';
+import { MAX_EXPRESSION_LENGTH, MAX_NESTING_DEPTH } from '../constants';
 import type { Answer } from '../types';
 import {
   prepareForEvaluation,
@@ -75,5 +76,42 @@ describe('substituteAnswer', () => {
     ['Ans×Ans', exact, '(29)×(29)'],
   ])('%s with %j → %s', (expression, answer, expected) => {
     expect(substituteAnswer(expression, answer)).toBe(expected);
+  });
+
+  describe('when the exact expression would pass the backend limits', () => {
+    /** A rounded answer whose expression is nested `depth` parentheses deep. */
+    function chainedAnswer(depth: number, result = rounded.result): Answer {
+      const expression = `${'('.repeat(depth)}1÷3${')'.repeat(depth)}`;
+      return { result, approximate: true, expression };
+    }
+
+    it('keeps the exact expression up to the nesting limit', () => {
+      const answer = chainedAnswer(MAX_NESTING_DEPTH - 1);
+
+      expect(substituteAnswer('Ans×3', answer)).toBe(`(${answer.expression})×3`);
+    });
+
+    it('falls back to the displayed result past the nesting limit', () => {
+      expect(substituteAnswer('Ans×3', chainedAnswer(MAX_NESTING_DEPTH))).toBe(
+        `(${rounded.result})×3`,
+      );
+    });
+
+    it('falls back to the displayed result past the length limit', () => {
+      const answer: Answer = {
+        result: '131',
+        approximate: true,
+        expression: '1+'.repeat(MAX_EXPRESSION_LENGTH / 2) + '1',
+      };
+
+      expect(substituteAnswer('Ans+1', answer)).toBe('(131)+1');
+    });
+
+    it.each([
+      ['1.5e+20', '(1.5×10^20)×3'],
+      ['-2e-7', '(-2×10^−7)×3'],
+    ])('writes a scientific result %s so the backend can read it', (result, expected) => {
+      expect(substituteAnswer('Ans×3', chainedAnswer(MAX_NESTING_DEPTH, result))).toBe(expected);
+    });
   });
 });
