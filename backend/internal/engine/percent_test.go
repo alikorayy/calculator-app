@@ -19,18 +19,27 @@ func TestPercent_Semantics(t *testing.T) {
 		{"repeated percent", "50%%", "1/200"},
 		{"negative percent", "-10%", "-1/10"},
 
-		// As the whole right operand of + or -, b% is a percentage of the left operand.
+		// After + or -, b% is a percentage of everything to its left (Google calculator).
 		{"adding a percentage", "50+10%", "55"},
 		{"subtracting a percentage", "50-10%", "45"},
 		{"keypad minus", "50−10%", "45"},
 		{"percentage of a parenthesized sum", "(10+20)+10%", "33"},
 		{"percentage of everything to the left", "100+10%+10%", "121"},
+		{"percentage of a product on the left", "2*50+10%", "110"},
 		{"decimal percentage stays exact", "80+12.5%", "90"},
 
-		// When the right operand is more than a percentage, the special rule does not apply.
-		{"percent inside a product on the right", "50+10%*2", "251/5"},
+		// The changed value is one operand for what follows, as on Google.
+		{"product after a percentage change", "50+10%*2", "110"},
+		{"division after a percentage change", "50-10%/9", "5"},
+		{"implicit multiplication after a percentage change", "50+10%(2)", "110"},
+		{"percent of a percentage change", "50+10%%", "11/20"},
+		{"sum after a percentage change", "50+10%*2+1", "111"},
+
+		// Elsewhere b% is a plain number.
 		{"percent on the left of a sum", "10%+50", "501/10"},
-		{"percent of a percent on the right", "50+10%%", "1001/20"},
+		{"parenthesized percentage", "50+(10%)", "501/10"},
+		{"negated percentage", "50+-10%", "499/10"},
+		{"squared percentage", "50+10%²", "5001/100"},
 	}
 
 	for _, tt := range tests {
@@ -54,6 +63,7 @@ func TestPercent_Errors(t *testing.T) {
 	}{
 		{"error inside a percentage", "(1/0)%", CodeDivisionByZero},
 		{"error inside a percentage of the left operand", "5+(1/0)%", CodeDivisionByZero},
+		{"error in the base of a percentage change", "(1/0)+10%", CodeDivisionByZero},
 		{"dividing by zero percent", "5/0%", CodeDivisionByZero},
 	}
 

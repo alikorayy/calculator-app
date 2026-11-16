@@ -47,16 +47,16 @@ gone; `50−7×3` and `50 − (7 × 3)` give the same tree.
             7   3
 ```
 
-The tree also decides the meaning of percent. In `50 + 10%` the whole right
-operand of `+` is a percentage, so it means "10 % of 50"; in `200 × 10%` it is
-simply `0.1`. This matches the Windows and Google calculators.
+The parser also decides the meaning of percent, following the Google
+calculator. After `+` or `-`, `b%` is a percentage of everything to its left,
+and the changed value becomes one operand: in `50 + 10% × 2` the `× 2` applies
+to `55`. Elsewhere (`200 × 10%`) and in parentheses (`50 + (10%)`) it is simply
+`b/100`.
 
 ```text
-            +            50 + 5 = 55
-           / \
-         50   %          10 % of 50 = 5
-              │
-              10
+                 ×               55 × 2 = 110
+                / \
+     (50 + 10%)    2             50 + 10 % of 50 = 55
 ```
 
 ## Grammar

@@ -194,7 +194,11 @@ The full contract is in [`backend/api/openapi.yaml`](backend/api/openapi.yaml).
 
 - **Modern calculator behaviour.** The Google and Windows calculators are the
   reference: whole expressions with standard precedence (`50 − 7 × 3 = 29`),
-  and their percent rule (`50 + 10% = 55`, `200 × 10% = 20`).
+  and Google's percent rule. After `+` or `−`, a percentage is taken of
+  everything to its left, and the result is one value for what follows:
+  `50 + 10% = 55`, `50 + 10% × 2 = 110`, while `200 × 10% = 20` and
+  `50 + (10%) = 50.1`. This is the one place where `×` does not bind tighter
+  than `+`, on purpose.
 - **Display precision.** Results are rounded once, to 16 significant digits as
   on the Windows calculator; very large or small values use scientific notation
   (`1e+20`).

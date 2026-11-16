@@ -28,7 +28,11 @@ import (
 // exponent (2^-1 = 0.5).
 //
 // '%' is a postfix operator that binds tightest of all: 10%^2 = (10%)^2.
-// What a percentage means depends on where it is used; see evaluateBinary.
+// On its own, or with '*' and '/', b% is b/100: 200 * 10% = 20. After '+' or
+// '-' it follows the Google calculator: "a + b%" is a increased by b percent
+// of itself, and that changed value is a single operand for what follows:
+// 50 + 10% = 55, 50 + 10% * 2 = 55 * 2 = 110, 50 + 10%% = 55% = 0.55. A
+// percentage in parentheses is a plain number again: 50 + (10%) = 50.1.
 //
 // '²' and '⁻¹' (the x² and 1/x keys) are postfix operators too, applied left
 // to right to the whole operand before them, as on the Windows calculator:
@@ -103,14 +107,53 @@ func (p *parser) parseExpression() (node, error) {
 		return nil, err
 	}
 	for p.peek().kind == tokenPlus || p.peek().kind == tokenMinus {
-		op := p.advance()
-		right, err := p.parseTerm()
+		op := p.advance().kind
+		operand, err := p.parseUnary()
 		if err != nil {
 			return nil, err
 		}
-		left = &binaryNode{op: op.kind, left: left, right: right}
+		if rate, extra, ok := p.percentRate(operand); ok {
+			// "left + b%" becomes one operand; '*' and '/' after it apply to it.
+			left, err = p.continueTerm(percentChange(op, left, rate, extra))
+		} else {
+			var right node
+			right, err = p.continueTerm(operand)
+			left = &binaryNode{op: op, left: left, right: right}
+		}
+		if err != nil {
+			return nil, err
+		}
 	}
 	return left, nil
+}
+
+// percentRate reports whether operand, just parsed after '+' or '-', is a
+// percentage written without parentheses ("10%", "10%%"). It returns the first
+// '%', which is the rate of the change, and how many more '%' follow it.
+// "(10%)" ends with ')' and is a plain number instead.
+func (p *parser) percentRate(operand node) (rate *percentNode, extra int, ok bool) {
+	percent, isPercent := operand.(*percentNode)
+	if !isPercent || p.previous != tokenPercent {
+		return nil, 0, false
+	}
+	for {
+		inner, isPercent := percent.operand.(*percentNode)
+		if !isPercent {
+			return percent, extra, true
+		}
+		percent = inner
+		extra++
+	}
+}
+
+// percentChange builds "left ± rate" and applies the extra '%' signs to the
+// changed value: in 50 + 10%%, the second '%' applies to 55.
+func percentChange(op tokenKind, left node, rate *percentNode, extra int) node {
+	var change node = &percentChangeNode{op: op, base: left, rate: rate}
+	for range extra {
+		change = &percentNode{operand: change}
+	}
+	return change
 }
 
 // parseTerm handles '*', '/' and implicit multiplication, which bind tighter
@@ -120,6 +163,12 @@ func (p *parser) parseTerm() (node, error) {
 	if err != nil {
 		return nil, err
 	}
+	return p.continueTerm(left)
+}
+
+// continueTerm applies the '*', '/' and implicit multiplications that follow
+// left, from left to right.
+func (p *parser) continueTerm(left node) (node, error) {
 	for {
 		var op tokenKind
 		switch {

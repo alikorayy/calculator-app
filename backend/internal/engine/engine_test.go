@@ -17,6 +17,10 @@ func TestEvaluate_Results(t *testing.T) {
 		{"0.1 + 0.2", engine.Result{Value: "0.3"}},
 		{"1/3", engine.Result{Value: "0.3333333333333333", Approximate: true}},
 		{"50 + 10%", engine.Result{Value: "55"}},
+		// Percent follows the Google calculator.
+		{"50 + 10% × 2", engine.Result{Value: "110"}},
+		{"50 + (10%)", engine.Result{Value: "50.1"}},
+		{"50 + 10%%", engine.Result{Value: "0.55"}},
 		{"-2^2", engine.Result{Value: "-4"}},
 		{"6/2(1+2)", engine.Result{Value: "9"}},
 		{"√(9/4)", engine.Result{Value: "1.5"}},

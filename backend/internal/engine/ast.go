@@ -39,6 +39,19 @@ func (n *percentNode) String() string {
 	return fmt.Sprintf("(%s%%)", n.operand)
 }
 
+// percentChangeNode is "base + rate%" or "base - rate%": base increased or
+// decreased by a percentage of itself, e.g. 50 + 10% = 55. It acts as a single
+// operand, so operators after it apply to the changed value: 50 + 10% × 2 = 110.
+type percentChangeNode struct {
+	op   tokenKind
+	base node
+	rate *percentNode
+}
+
+func (n *percentChangeNode) String() string {
+	return fmt.Sprintf("(%s %s %s of it)", n.base, operatorSymbol(n.op), n.rate)
+}
+
 // sqrtNode is the square root of its operand, e.g. √(9).
 type sqrtNode struct {
 	operand node

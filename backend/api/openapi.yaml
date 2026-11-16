@@ -39,9 +39,11 @@ paths:
         to the whole operand before them, left to right: `3²⁻¹ = 1/9`,
         `3²^3 = 729`, `2^3² = 512`.
 
-        `%` follows calculator conventions: as the whole right operand of `+`
-        or `-` it is a percentage of the left operand (`50 + 10% = 55`);
-        everywhere else `b%` is `b/100` (`200 × 10% = 20`).
+        `%` follows the Google calculator. After `+` or `-` it is a percentage
+        of everything to its left, and the changed value is one operand for
+        what follows: `50 + 10% = 55`, `50 + 10% × 2 = 110`, `50 + 10%% = 0.55`.
+        Everywhere else, and in parentheses, `b%` is `b/100`:
+        `200 × 10% = 20`, `50 + (10%) = 50.1`.
 
         Limits: 256 characters, 32 significant digits per number, 32 nested
         parentheses, results between 1e-10000 and 1e+10000.
