@@ -66,8 +66,13 @@ export interface CalculatorState {
 /** A finished calculation kept in the history. */
 export interface HistoryEntry {
   id: string;
+  /** The expression as the user saw it; it may contain "Ans". */
   expression: string;
   result: string;
+  /** Whether `result` was rounded by the server. */
+  approximate: boolean;
+  /** The expression that was sent to the server, with "Ans" replaced. */
+  sentExpression: string;
 }
 
 /** Label of the clear key: clear the entry, or clear everything. */

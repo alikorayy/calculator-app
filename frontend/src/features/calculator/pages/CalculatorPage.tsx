@@ -14,7 +14,7 @@ import { useCalculator } from '../hooks/useCalculator';
 import { useHistory } from '../hooks/useHistory';
 import { useKeyboard } from '../hooks/useKeyboard';
 import type { HistoryEntry } from '../types';
-import { reusableResult } from '../utils/evaluation';
+import { reusableExpression, reusableResult } from '../utils/evaluation';
 import styles from './CalculatorPage.module.css';
 
 /**
@@ -41,7 +41,9 @@ export function CalculatorPage() {
   useKeyboard(calculator.pressKey, !historyOpen);
 
   const pickFromHistory = (entry: HistoryEntry, part: 'expression' | 'result') => {
-    calculator.restoreExpression(part === 'expression' ? entry.expression : reusableResult(entry));
+    calculator.restoreExpression(
+      part === 'expression' ? reusableExpression(entry) : reusableResult(entry),
+    );
     setHistoryOpen(false);
   };
 

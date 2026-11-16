@@ -46,7 +46,24 @@ describe('useCalculator', () => {
     expect(onResult).toHaveBeenCalledWith({
       expression: EXPRESSIONS.exact,
       result: RESULTS.exact.result,
+      approximate: RESULTS.exact.approximate,
+      sentExpression: EXPRESSIONS.exact,
     });
+  });
+
+  it('does nothing on "=" while a result is on display', async () => {
+    const onResult = vi.fn();
+    const { result } = renderHook(() => useCalculator({ onResult }));
+    press(result, [...EXACT_KEYS, 'equals']);
+    await waitFor(() => {
+      expect(result.current.state.status).toBe('result');
+    });
+
+    press(result, ['equals']);
+
+    expect(result.current.isEvaluating).toBe(false);
+    expect(result.current.state.expression).toBe(RESULTS.exact.result);
+    expect(onResult).toHaveBeenCalledTimes(1);
   });
 
   it('marks a rounded result with ≈ and reuses its exact expression for Ans', async () => {

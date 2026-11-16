@@ -62,7 +62,9 @@ function isHistoryEntries(value: unknown): value is HistoryEntry[] {
         isRecord(entry) &&
         typeof entry.id === 'string' &&
         typeof entry.expression === 'string' &&
-        typeof entry.result === 'string',
+        typeof entry.result === 'string' &&
+        typeof entry.approximate === 'boolean' &&
+        typeof entry.sentExpression === 'string',
     )
   );
 }

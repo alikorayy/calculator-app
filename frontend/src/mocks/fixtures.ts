@@ -32,11 +32,39 @@ export const ERRORS = {
   unknownCalculationCode: { error: { code: 'NEW_CODE', message: 'Something new' } },
 } satisfies Record<string, ErrorResponse>;
 
-/** A history with an exact, a rounded and a scientific result, newest first. */
+/**
+ * A history with a scientific, a rounded and an exact result, newest first,
+ * and an older entry whose expression used "Ans".
+ */
 export const HISTORY_ENTRIES = [
-  { id: 'entry-3', expression: '10^20', result: '1e+20' },
-  { id: 'entry-2', expression: '1÷3', result: '0.3333333333333333' },
-  { id: 'entry-1', expression: '50−7×3', result: '29' },
+  {
+    id: 'entry-4',
+    expression: '10^20',
+    result: '1e+20',
+    approximate: false,
+    sentExpression: '10^20',
+  },
+  {
+    id: 'entry-3',
+    expression: '1÷3',
+    result: '0.3333333333333333',
+    approximate: true,
+    sentExpression: '1÷3',
+  },
+  {
+    id: 'entry-2',
+    expression: '50−7×3',
+    result: '29',
+    approximate: false,
+    sentExpression: '50−7×3',
+  },
+  {
+    id: 'entry-1',
+    expression: 'Ans×10',
+    result: '1e+21',
+    approximate: false,
+    sentExpression: '(10^20)×10',
+  },
 ] as const satisfies readonly HistoryEntry[];
 
 /** Seconds sent in the Retry-After header of a 429 fixture. */

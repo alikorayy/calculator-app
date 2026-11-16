@@ -40,8 +40,13 @@ export function useCalculator({ onResult }: UseCalculatorOptions = {}): Calculat
   const evaluate = useEvaluate();
 
   const submit = async () => {
+    // A result on display is already calculated; sending its rounded or
+    // scientific text again would lose precision or fail to parse.
+    if (state.status === 'evaluating' || state.status === 'result') {
+      return;
+    }
     const shownExpression = prepareForEvaluation(state.expression);
-    if (shownExpression === null || state.status === 'evaluating') {
+    if (shownExpression === null) {
       return;
     }
     const sentExpression = substituteAnswer(shownExpression, state.answer);
@@ -56,7 +61,12 @@ export function useCalculator({ onResult }: UseCalculatorOptions = {}): Calculat
         sentExpression,
         response: result.data,
       });
-      onResult?.({ expression: shownExpression, result: result.data.result });
+      onResult?.({
+        expression: shownExpression,
+        result: result.data.result,
+        approximate: result.data.approximate,
+        sentExpression,
+      });
       return;
     }
     if (result.error.kind === 'aborted') {

@@ -2,18 +2,40 @@ import { describe, expect, it } from 'vitest';
 
 import { HISTORY_ENTRIES } from '../../../mocks/fixtures';
 import type { Answer } from '../types';
-import { prepareForEvaluation, reusableResult, substituteAnswer } from './evaluation';
+import {
+  prepareForEvaluation,
+  reusableExpression,
+  reusableResult,
+  substituteAnswer,
+} from './evaluation';
+
+const [scientific, rounded, exact, withAnswer] = HISTORY_ENTRIES;
 
 describe('reusableResult', () => {
-  const [scientific, rounded, exact] = HISTORY_ENTRIES;
-
-  it('reuses a plain result as it is', () => {
+  it('reuses an exact plain result as it is', () => {
     expect(reusableResult(exact)).toBe(exact.result);
-    expect(reusableResult(rounded)).toBe(rounded.result);
+  });
+
+  it('replaces a rounded result by its expression, so no precision is lost', () => {
+    expect(reusableResult(rounded)).toBe(`(${rounded.sentExpression})`);
   });
 
   it('replaces a scientific result by its expression, which the backend can read', () => {
-    expect(reusableResult(scientific)).toBe(`(${scientific.expression})`);
+    expect(reusableResult(scientific)).toBe(`(${scientific.sentExpression})`);
+  });
+
+  it('uses the sent expression, because "Ans" may mean another value by now', () => {
+    expect(reusableResult(withAnswer)).toBe(`(${withAnswer.sentExpression})`);
+  });
+});
+
+describe('reusableExpression', () => {
+  it('restores an expression as the user saw it', () => {
+    expect(reusableExpression(exact)).toBe(exact.expression);
+  });
+
+  it('restores an expression with "Ans" as it was sent', () => {
+    expect(reusableExpression(withAnswer)).toBe(withAnswer.sentExpression);
   });
 });
 

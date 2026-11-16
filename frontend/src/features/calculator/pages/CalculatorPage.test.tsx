@@ -109,6 +109,22 @@ describe('CalculatorPage', () => {
     expect(display()).toHaveValue(RESULTS.exact.result);
   });
 
+  it('reuses a rounded result from the history by its expression, so it stays exact', async () => {
+    const user = userEvent.setup();
+    render(<CalculatorPage />);
+    await click(user, '1', 'Divide', '3', 'Calculate');
+    await waitFor(() => {
+      expect(display()).toHaveValue(RESULTS.rounded.result);
+    });
+    await click(user, 'All clear');
+
+    await click(user, LABELS.history);
+    const dialog = screen.getByRole('dialog', { name: LABELS.history });
+    await user.click(within(dialog).getByRole('button', { name: RESULTS.rounded.result }));
+
+    expect(display()).toHaveValue(`(${EXPRESSIONS.rounded})`);
+  });
+
   it('applies the same input rules whether or not the display has focus', async () => {
     const user = userEvent.setup();
     render(<CalculatorPage />);

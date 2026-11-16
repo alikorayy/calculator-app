@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { HISTORY_STORAGE_KEY, MAX_HISTORY_ENTRIES } from '../constants';
 import { useHistory } from './useHistory';
 
-const ENTRY = { expression: '50−7×3', result: '29' };
+const ENTRY = { expression: '50−7×3', result: '29', approximate: false, sentExpression: '50−7×3' };
 
 describe('useHistory', () => {
   it('adds entries newest first, each with its own id', () => {
@@ -12,7 +12,7 @@ describe('useHistory', () => {
 
     act(() => {
       result.current.addEntry(ENTRY);
-      result.current.addEntry({ expression: '1÷3', result: '0.3333333333333333' });
+      result.current.addEntry({ ...ENTRY, expression: '1÷3' });
     });
 
     expect(result.current.entries.map((entry) => entry.expression)).toEqual(['1÷3', '50−7×3']);
@@ -24,7 +24,7 @@ describe('useHistory', () => {
 
     act(() => {
       for (let i = 0; i <= MAX_HISTORY_ENTRIES; i++) {
-        result.current.addEntry({ expression: String(i), result: String(i) });
+        result.current.addEntry({ ...ENTRY, expression: String(i) });
       }
     });
 
@@ -43,6 +43,17 @@ describe('useHistory', () => {
 
     expect(reloaded.result.current.entries).toMatchObject([ENTRY]);
     expect(window.sessionStorage.getItem(HISTORY_STORAGE_KEY)).toContain(ENTRY.expression);
+  });
+
+  it('starts empty when the stored history has an older shape', () => {
+    window.sessionStorage.setItem(
+      HISTORY_STORAGE_KEY,
+      JSON.stringify([{ id: 'old', expression: '1+1', result: '2' }]),
+    );
+
+    const { result } = renderHook(() => useHistory());
+
+    expect(result.current.entries).toEqual([]);
   });
 
   it('can be cleared', () => {

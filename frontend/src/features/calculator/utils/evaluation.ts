@@ -38,20 +38,37 @@ export function substituteAnswer(expression: string, answer: Answer | null): str
   if (answer === null || !expression.includes(SYMBOLS.ans)) {
     return expression;
   }
-  const exact = !answer.approximate && PLAIN_NUMBER.test(answer.result);
-  const replacement = `(${exact ? answer.result : answer.expression})`;
+  const replacement = `(${isExactText(answer.result, answer.approximate) ? answer.result : answer.expression})`;
   return expression.replaceAll(SYMBOLS.ans, replacement);
 }
 
 /**
- * Text to put back into the display when a history result is picked. A plain
- * number is reused as it is; a result in scientific notation such as "1e+64"
- * cannot be typed back into an expression, so the expression that produced it
- * is used instead, in parentheses.
+ * Text to put back into the display when a history result is picked, by the
+ * same rule as "Ans": an exact plain number is reused as it is. A rounded
+ * result ("0.3333333333333333") would lose precision and a scientific one
+ * ("1e+64") cannot be typed back, so the expression that was sent to get it is
+ * used instead, in parentheses.
  *
  * @param entry - The picked history entry.
  * @returns Text the backend accepts as part of an expression.
  */
 export function reusableResult(entry: HistoryEntry): string {
-  return PLAIN_NUMBER.test(entry.result) ? entry.result : `(${entry.expression})`;
+  return isExactText(entry.result, entry.approximate) ? entry.result : `(${entry.sentExpression})`;
+}
+
+/**
+ * Text to put back into the display when a history expression is picked. An
+ * expression with "Ans" is restored as it was sent, because "Ans" may mean a
+ * different value by now.
+ *
+ * @param entry - The picked history entry.
+ * @returns The expression to restore.
+ */
+export function reusableExpression(entry: HistoryEntry): string {
+  return entry.expression.includes(SYMBOLS.ans) ? entry.sentExpression : entry.expression;
+}
+
+/** Whether a result's text is its exact value and can be typed back as it is. */
+function isExactText(result: string, approximate: boolean): boolean {
+  return !approximate && PLAIN_NUMBER.test(result);
 }
