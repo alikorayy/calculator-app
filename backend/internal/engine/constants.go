@@ -80,6 +80,15 @@ const (
 // percentBase is the divisor that turns a percentage into a fraction: 10% = 10/100.
 const percentBase = 100
 
+// Postfix operators of the x² and 1/x calculator keys. They apply to the whole
+// operand before them, so 3²⁻¹ = (3²)⁻¹ = 1/9.
+const (
+	squareSymbol       = '²'
+	reciprocalSymbol   = "⁻¹"
+	squareExponent     = 2
+	reciprocalExponent = -1
+)
+
 // Characters and names with a fixed meaning in an expression.
 const (
 	decimalSeparator = '.'

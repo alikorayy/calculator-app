@@ -49,6 +49,13 @@ func TestTokenize_Valid(t *testing.T) {
 			},
 		},
 		{
+			name: "square and two-character reciprocal keys",
+			expr: "3²⁻¹",
+			want: []token{
+				tok(tokenNumber, "3", 0), tok(tokenSquare, "²", 1), tok(tokenReciprocal, "⁻¹", 2), tok(tokenEOF, "", 4),
+			},
+		},
+		{
 			name: "number text is kept exactly as typed",
 			expr: "007.250",
 			want: []token{tok(tokenNumber, "007.250", 0), tok(tokenEOF, "", 7)},
@@ -141,6 +148,7 @@ func TestTokenize_Invalid(t *testing.T) {
 		{"unknown name", "2+abc", CodeSyntaxError, `Unknown name "abc"`, 2},
 		{"name glued to sqrt", "sqrtx(4)", CodeSyntaxError, `Unknown name "sqrtx"`, 0},
 		{"non-ASCII digit", "1+٣", CodeSyntaxError, "Unexpected character '٣'", 2},
+		{"superscript minus without one", "3⁻2", CodeSyntaxError, "Unexpected character '⁻'", 1},
 		// × is 2 bytes in UTF-8; positions must count characters, not bytes.
 		{"position counts characters not bytes", "2×3 &", CodeSyntaxError, "Unexpected character '&'", 4},
 		{

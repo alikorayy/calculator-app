@@ -23,6 +23,13 @@ func TestEvaluate_Results(t *testing.T) {
 		{"√(2)", engine.Result{Value: "1.414213562373095", Approximate: true}},
 		{"27^(2/3)", engine.Result{Value: "9"}},
 		{"10^20", engine.Result{Value: "1e+20"}},
+		// The x² and 1/x keys apply to the whole operand before them, as on Windows.
+		{"3²⁻¹", engine.Result{Value: "0.1111111111111111", Approximate: true}},
+		{"3⁻¹²", engine.Result{Value: "0.1111111111111111", Approximate: true}},
+		{"3⁻¹⁻¹", engine.Result{Value: "3"}},
+		{"3²^3", engine.Result{Value: "729"}},
+		{"2^3²", engine.Result{Value: "512"}},
+		{"-2²", engine.Result{Value: "-4"}},
 	}
 
 	for _, tt := range tests {
@@ -49,6 +56,7 @@ func TestEvaluate_Errors(t *testing.T) {
 		{"5 / 0", engine.CodeDivisionByZero, engine.NoPosition},
 		{"0 / 0", engine.CodeUndefinedResult, engine.NoPosition},
 		{"√(-4)", engine.CodeDomainError, engine.NoPosition},
+		{"0⁻¹", engine.CodeDivisionByZero, engine.NoPosition},
 		{"10^99999", engine.CodeOverflow, engine.NoPosition},
 		{strings.Repeat("1", 300), engine.CodeLimitExceeded, engine.NoPosition},
 	}

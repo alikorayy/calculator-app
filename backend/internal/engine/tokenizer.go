@@ -17,6 +17,8 @@ const (
 	tokenDivide
 	tokenPower
 	tokenPercent
+	tokenSquare
+	tokenReciprocal
 	tokenSqrt
 	tokenLeftParen
 	tokenRightParen
@@ -64,11 +66,11 @@ func tokenize(expr string) ([]token, error) {
 			}
 			tokens = append(tokens, name)
 		default:
-			kind, ok := symbolKind(r)
-			if !ok {
-				return nil, newSyntaxError(pos, fmt.Sprintf(msgUnexpectedCharacter, r))
+			symbol, err := scanSymbol(runes, pos)
+			if err != nil {
+				return nil, err
 			}
-			tokens = append(tokens, token{kind: kind, text: string(r), pos: pos})
+			tokens = append(tokens, symbol)
 		}
 		pos += len([]rune(tokens[len(tokens)-1].text))
 	}
@@ -133,11 +135,27 @@ func scanName(runes []rune, start int) (token, error) {
 	return token{kind: tokenSqrt, text: text, pos: start}, nil
 }
 
+// scanSymbol reads the operator, symbol or parenthesis starting at start.
+// Every symbol is one character, except the two-character reciprocal "⁻¹".
+func scanSymbol(runes []rune, start int) (token, error) {
+	if strings.HasPrefix(string(runes[start:]), reciprocalSymbol) {
+		return token{kind: tokenReciprocal, text: reciprocalSymbol, pos: start}, nil
+	}
+	r := runes[start]
+	kind, ok := symbolKind(r)
+	if !ok {
+		return token{}, newSyntaxError(start, fmt.Sprintf(msgUnexpectedCharacter, r))
+	}
+	return token{kind: kind, text: string(r), pos: start}, nil
+}
+
 // symbolKind maps a single-character operator, symbol or parenthesis to its
 // token kind. Unicode operators as shown on calculator keypads (× ÷ −) are
 // accepted alongside their ASCII equivalents.
 func symbolKind(r rune) (tokenKind, bool) {
 	switch r {
+	case squareSymbol:
+		return tokenSquare, true
 	case '+':
 		return tokenPlus, true
 	case '-', '−':

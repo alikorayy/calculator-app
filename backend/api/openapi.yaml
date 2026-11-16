@@ -35,6 +35,10 @@ paths:
         (`2(3+1)`). Standard precedence applies: `50 - 7 × 3 = 29`, `-2^2 = -4`,
         `2^3^2 = 512`, `6/2(1+2) = 9`.
 
+        The x² and 1/x keys are the postfix operators `²` and `⁻¹`. They apply
+        to the whole operand before them, left to right: `3²⁻¹ = 1/9`,
+        `3²^3 = 729`, `2^3² = 512`.
+
         `%` follows calculator conventions: as the whole right operand of `+`
         or `-` it is a percentage of the left operand (`50 + 10% = 55`);
         everywhere else `b%` is `b/100` (`200 × 10% = 20`).

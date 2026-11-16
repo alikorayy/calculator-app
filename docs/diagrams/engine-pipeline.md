@@ -68,6 +68,6 @@ expression := term (('+' | '-') term)*
 term       := unary (('*' | '/' | implicit) unary)*
 unary      := ('-' | '+') unary | power
 power      := postfix ('^' unary)?
-postfix    := primary ('%')*
+postfix    := primary ('%' | '²' | '⁻¹')*
 primary    := NUMBER | '(' expression ')' | '√(' expression ')'
 ```

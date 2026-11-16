@@ -12,7 +12,7 @@ import (
 //	term       := unary (('*' | '/' | implicit) unary)*
 //	unary      := ('-' | '+') unary | power
 //	power      := postfix ('^' unary)?
-//	postfix    := primary ('%')*
+//	postfix    := primary ('%' | '²' | '⁻¹')*
 //	primary    := NUMBER | '(' expression ')' | SQRT '(' expression ')'
 //
 // Because expression is built out of terms, '*' and '/' bind tighter than
@@ -29,6 +29,11 @@ import (
 //
 // '%' is a postfix operator that binds tightest of all: 10%^2 = (10%)^2.
 // What a percentage means depends on where it is used; see evaluateBinary.
+//
+// '²' and '⁻¹' (the x² and 1/x keys) are postfix operators too, applied left
+// to right to the whole operand before them, as on the Windows calculator:
+// 3²⁻¹ = (3²)⁻¹ = 1/9, 3²^3 = (3²)^3 = 729. As an exponent they square only
+// the exponent: 2^3² = 2^(3²) = 512.
 //
 // The square root (√ or sqrt) is used only in function form with parentheses,
 // as on Google: √(9). This leaves no doubt about how much it covers.
@@ -138,7 +143,7 @@ func (p *parser) parseTerm() (node, error) {
 func (p *parser) startsImplicitMultiplication() bool {
 	switch p.peek().kind {
 	case tokenLeftParen, tokenSqrt:
-		return p.previous == tokenNumber || p.previous == tokenRightParen || p.previous == tokenPercent
+		return p.previous == tokenNumber || p.previous == tokenRightParen || isPostfix(p.previous)
 	case tokenNumber:
 		return p.previous == tokenRightParen
 	default:
@@ -183,17 +188,41 @@ func (p *parser) parsePower() (node, error) {
 	return &binaryNode{op: op.kind, left: base, right: exponent}, nil
 }
 
-// parsePostfix handles any number of '%' signs after an operand: 50%%.
+// parsePostfix handles any number of postfix operators after an operand,
+// applied left to right: 50%%, 3²⁻¹.
 func (p *parser) parsePostfix() (node, error) {
 	operand, err := p.parsePrimary()
 	if err != nil {
 		return nil, err
 	}
-	for p.peek().kind == tokenPercent {
-		p.advance()
-		operand = &percentNode{operand: operand}
+	for isPostfix(p.peek().kind) {
+		operand = applyPostfix(p.advance().kind, operand)
 	}
 	return operand, nil
+}
+
+// isPostfix reports whether kind is an operator written after its operand.
+func isPostfix(kind tokenKind) bool {
+	return kind == tokenPercent || kind == tokenSquare || kind == tokenReciprocal
+}
+
+// applyPostfix wraps operand in the node of a postfix operator. x² and x⁻¹
+// are powers with a fixed exponent, so they share the rules of '^'
+// (0⁻¹ is a division by zero).
+func applyPostfix(kind tokenKind, operand node) node {
+	switch kind {
+	case tokenSquare:
+		return &binaryNode{op: tokenPower, left: operand, right: integerNode(squareExponent)}
+	case tokenReciprocal:
+		return &binaryNode{op: tokenPower, left: operand, right: integerNode(reciprocalExponent)}
+	default:
+		return &percentNode{operand: operand}
+	}
+}
+
+// integerNode is a number node holding the integer n.
+func integerNode(n int64) node {
+	return &numberNode{value: big.NewRat(n, 1)}
 }
 
 // parsePrimary handles a number, a parenthesized sub-expression or a square root.
