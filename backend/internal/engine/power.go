@@ -18,8 +18,7 @@ import (
 // 0^x for x < 0 is a division by zero, and a negative base with a fractional
 // exponent ((-8)^0.5) has no real result and is a DOMAIN_ERROR. Before any
 // expensive work the size of the result is estimated, and powers that would be
-// out of range (OVERFLOW) or too large to compute exactly (LIMIT_EXCEEDED) are
-// refused.
+// out of range (OVERFLOW) are refused.
 func power(base, exponent *big.Rat) (*big.Rat, error) {
 	switch {
 	case base.Sign() == 0:
@@ -42,7 +41,13 @@ func powerOfZero(exponent *big.Rat) (*big.Rat, error) {
 	}
 }
 
-// integerPower returns base^n exactly. base must not be zero.
+// integerPower returns base^n. base must not be zero.
+//
+// The result is exact unless its exact fraction would be too large to compute
+// (see fitsExactly), e.g. √(2)^400 = 1.6e+60 or 1.1^50000: the value is in
+// range, but numerator and denominator would have tens of thousands of digits.
+// Such powers are computed with big.Float at irrationalPrecision instead, far
+// more precise than the 16 digits shown, and the result is marked approximate.
 func integerPower(base *big.Rat, n *big.Int) (*big.Rat, error) {
 	if isPlusOrMinusOne(base) {
 		return powerOfPlusOrMinusOne(base, n), nil
@@ -51,10 +56,23 @@ func integerPower(base *big.Rat, n *big.Int) (*big.Rat, error) {
 	if err := checkPowerMagnitude(base, exponent); err != nil {
 		return nil, err
 	}
-	if err := checkExactPowerSize(base, n); err != nil {
+	if fitsExactly(base, n) {
+		return exactPower(base, n), nil
+	}
+	return approximateIntegerPower(base, n, exponent)
+}
+
+// approximateIntegerPower computes base^n in big.Float. A negative base keeps
+// its sign for odd n: (-1.1)^3 < 0.
+func approximateIntegerPower(base *big.Rat, n *big.Int, exponent *big.Rat) (*big.Rat, error) {
+	result, err := approximatePower(new(big.Rat).Abs(base), exponent)
+	if err != nil {
 		return nil, err
 	}
-	return exactPower(base, n), nil
+	if base.Sign() < 0 && n.Bit(0) == 1 {
+		result.Neg(result)
+	}
+	return result, nil
 }
 
 // fractionalPower returns base^exponent for a non-integer exponent. base must
@@ -110,17 +128,14 @@ func preciseLog10(x *big.Rat) float64 {
 	return ln / math.Ln10
 }
 
-// checkExactPowerSize reports LIMIT_EXCEEDED when base^n would need too many
-// bits to represent exactly. Numerator and denominator grow by a factor of n,
+// fitsExactly reports whether base^n can be computed as an exact fraction
+// within maxExactPowerBits. Numerator and denominator grow by a factor of n,
 // so a base with many digits and a large exponent can be in range yet need
-// millions of digits (e.g. 1.000…001^1000).
-func checkExactPowerSize(base *big.Rat, n *big.Int) error {
+// millions of digits (e.g. 1.000…001^1000), which would take too long.
+func fitsExactly(base *big.Rat, n *big.Int) bool {
 	absN, _ := new(big.Float).SetInt(n).Float64()
 	widestPart := max(base.Num().BitLen(), base.Denom().BitLen())
-	if math.Abs(absN)*float64(widestPart) > maxExactPowerBits {
-		return newError(CodeLimitExceeded, msgExponentTooLarge)
-	}
-	return nil
+	return math.Abs(absN)*float64(widestPart) <= maxExactPowerBits
 }
 
 // exactPower computes base^n with integer arithmetic on the numerator and

@@ -132,7 +132,6 @@ func TestPower_Errors(t *testing.T) {
 		{"result too small", "10^-10001", CodeOverflow},
 		{"huge exponent", "2^" + strings.Repeat("9", maxNumberDigits), CodeOverflow},
 		{"tower of powers", "9^9^9", CodeOverflow},
-		{"in range but too many digits to compute exactly", "1.0000000000000000000000000000001^1000", CodeLimitExceeded},
 		{"negative base with a fractional exponent", "(-8)^(1/3)", CodeDomainError},
 		{"minus one with a fractional exponent", "(-1)^0.5", CodeDomainError},
 		{"zero to a negative fractional power", "0^-0.5", CodeDivisionByZero},

@@ -34,6 +34,15 @@ func TestEvaluate_Results(t *testing.T) {
 		{"3²^3", engine.Result{Value: "729"}},
 		{"2^3²", engine.Result{Value: "512"}},
 		{"-2²", engine.Result{Value: "-4"}},
+		// In range, but too large to compute as an exact fraction: computed
+		// approximately. Expected values come from 120-digit decimal arithmetic.
+		{"√(2)^400", engine.Result{Value: "1.60693804425899e+60", Approximate: true}},
+		{"1.1^50000", engine.Result{Value: "4.307823600783607e+2069", Approximate: true}},
+		{"(-1.1)^50001", engine.Result{Value: "-4.738605960861967e+2069", Approximate: true}},
+		{"(-1.1)^50000", engine.Result{Value: "4.307823600783607e+2069", Approximate: true}},
+		{"0.9^-50000", engine.Result{Value: "7.490797101273443e+2287", Approximate: true}},
+		{"1.0000000000000001^1000000", engine.Result{Value: "1.0000000001", Approximate: true}},
+		{"1.0000000000000000000000000000001^1000", engine.Result{Value: "1", Approximate: true}},
 	}
 
 	for _, tt := range tests {

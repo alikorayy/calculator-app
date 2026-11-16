@@ -17,7 +17,8 @@ const (
 	// must be to maxResultExponent before the range is checked exactly.
 	rangeCheckMargin = 1
 	// maxExactPowerBits bounds the size, in bits, of the numerator or denominator
-	// of an exactly computed power (about 30,000 decimal digits).
+	// of an exactly computed power (about 30,000 decimal digits). Larger powers
+	// are computed approximately.
 	maxExactPowerBits = 100000
 )
 
@@ -36,7 +37,6 @@ const (
 	msgDivisionByZero      = "Cannot divide by zero"
 	msgUndefinedResult     = "Result is undefined"
 	msgOutOfRange          = "Result is out of range"
-	msgExponentTooLarge    = "Exponent is too large"
 	msgInvalidInput        = "Invalid input"
 	msgExpectedParenAfter  = "Expected \"(\" after %q"
 	msgUnknownOperation    = "Unknown operation %q"
